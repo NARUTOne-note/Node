@@ -1,0 +1,251 @@
+http://www.runoob.com/nodejs/nodejs-tutorial.html（nodejs入门教程）
+
+node name.js  运行
+
+一、命令行：(均需要在根目录下进行；npm是nodeJS的包管理工具，详细见npm使用介绍)
+npm install ...安装（-g代表全局）
+npm uninstall ... 卸载
+node url 文件执行
+node/npm -v	查看版本
+node/npm ls 模块	查看安装包或模块
+npm update express 更新web框架模块express的模块
+npm search express
+
+二、快捷键及命令（REPL交互式解释器及表达式、变量的使用）
+ctrl + c - 退出当前终端。
+ctrl + c 按下两次 - 退出 Node REPL。
+ctrl + d - 退出 Node REPL.
+向上/向下 键 - 查看输入的历史命令
+tab 键 - 列出当前命令
+.help - 列出使用命令
+.break - 退出多行表达式
+.clear - 退出多行表达式
+.save filename - 保存当前的 Node REPL 会话到指定文件
+.load filename - 载入当前 Node REPL 会话的文件内容。
+
+三、事件循环
+Node.js 是单进程单线程应用程序，但是通过事件和回调支持并发，所以性能非常高。
+Node.js 的每一个 API 都是异步的，并作为一个独立线程运行，使用异步函数调用，并处理并发。
+Node.js 基本上所有的事件机制都是用设计模式中观察者模式实现。
+Node.js 单线程类似进入一个while(true)的事件循环，直到没有事件观察者退出，每个异步事件都生成一个事件观察者，如果有事件发生就调用该回调函数.
+
+四、EventEmitter对象
+events 模块只提供了一个对象： events.EventEmitter。EventEmitter 的核心就是事件触发与事件监听器功能的封装。
+EventEmitter 对象如果在实例化时发生错误，会触发 'error' 事件。当添加新的监听器时，'newListener' 事件会触发，当监听器被移除时，'removeListener' 事件被触发。
+EventEmitter 提供了多个属性，如 on 和 emit。on 函数用于绑定事件函数，emit 属性用于触发一个事件。
+
+方法描述：(event,均为一个字符串)
+①addListener(event,listener),为指定事件添加监听器，并添加到监听器数组的尾部
+②on(event,listener)，为事件注册一个监听器，接收一个字符串event和一个回调函数
+③once(event,listener),为事件注册一个单次监听器，只会触发一次
+④removeListener(event,listener)，移除指定事件的某个监听器，且该监听器该事件必须已经注册过；此操作将会改变处于被删监听器之后的那些监听器的索引。
+⑤removeAllListeners([event]),移除所有事件的监听器，如果指定了事件就移除该事件的所有监听器
+⑥setMaxListeners(n),默认情况下，EventEmitters添加的监听器超过10个会输出警告信息，此方法用于提高限制数量
+⑦listeners(event)，返回指点事件的监听数组
+⑧emit(event,[arg1],[arg2],[...]),按参数的顺序执行每个监听器，如果事件有注册监听返回 true，否则返回 false。
+
+listenerCount(emitter,event),返回监听器数量
+
+
+error事件
+EventEmitter 定义了一个特殊的事件 error，它包含了错误的语义，我们在遇到 异常的时候通常会触发 error 事件。
+当 error 被触发时，EventEmitter 规定如果没有响 应的监听器，Node.js 会把它当作异常，退出程序并输出错误信息。
+我们一般要为会触发 error 事件的对象设置监听器，避免遇到错误后整个程序崩溃。
+
+注：大多数时候我们不会直接使用 EventEmitter，而是在对象中继承它。包括 fs、net、 http 在内的，只要是支持事件响应的核心模块都是 EventEmitter 的子类。
+为什么要这样做呢？原因有两点：
+首先，具有某个实体功能的对象实现事件符合语义， 事件的监听和发射应该是一个对象的方法。
+其次 JavaScript 的对象机制是基于原型的，支持 部分多重继承，继承 EventEmitter 不会打乱对象原有的继承关系。
+
+
+五、Buffer缓冲区
+JavaScript 语言自身只有字符串数据类型，没有二进制数据类型。
+但在处理像TCP流或文件流时，必须使用到二进制数据。因此在 Node.js中，定义了一个 Buffer 类，该类用来创建一个专门存放二进制数据的缓存区。
+Buffer 类的实例中。一个 Buffer 类似于一个整数数组，但它对应于 V8 堆内存之外的一块原始内存。
+
+（1）创建Buffer类
+①var buf = new Buffer(10);创建长度为10字节的Buffer类
+②给定数组
+var buf = new Buffer(arr);
+③通过一个字符串来创建Buffer实例
+var buf = new Buffer(str,"utf-8");//utf-8为默认编码方式，此外它同样支持以下编码："ascii", "utf8", "utf16le", "ucs2", "base64" 和 "hex"。
+
+（2）写入缓存区
+buf.write(string[,offset][,length][,encoding])
+参数描述：
+string - 写入缓冲区的字符串。
+offset - 缓冲区开始写入的索引值，默认为 0 。
+length - 写入的字节数，默认为 buffer.length
+encoding - 使用的编码。默认为 'utf8' 。
+
+（3）读取缓存区数据
+buf.toString([encoding][,start][,end])
+参数描述：
+encoding - 使用的编码。默认为 'utf8' 。
+start - 指定开始读取的索引位置，默认为 0。
+end - 结束位置，默认为缓冲区的末尾。
+
+（4）Buffer转换为JSON对象
+buf.toJSON(buf);
+
+（5）缓存区合并
+Buffer.concat(list[,totalLength])
+参数描述：
+list - 用于合并的 Buffer 对象数组列表。
+totalLength - 指定合并后Buffer对象的总长度。
+
+（6）缓存区比较
+buf.compare(otherBuffer);
+返回一个数字，<0表示 buf 在 otherBuffer 之前，>0之后，=0相同。
+
+（7）缓存区拷贝
+buf.copy(targetBuffer[,targetStart][,sourceStart][,sourceEnd])//没有返回值。
+
+targetBuffer - 要拷贝的 Buffer 对象。
+targetStart - 数字, 可选, 默认: 0
+sourceStart - 数字, 可选, 默认: 0
+sourceEnd - 数字, 可选, 默认: buffer.length
+
+buf.length缓存区Buffer对象的内存长度
+
+
+（8）缓存区裁剪
+buf.slice([start][,end]);
+返回一个新的缓冲区，它和旧缓冲区指向同一块内存，但是从索引 start 到 end 的位置剪切。
+
+
+**注：Buffer对象模块的常用方法见http://www.runoob.com/nodejs/nodejs-buffer.html
+
+
+六、Stream流
+
+Stream 是一个抽象接口，Node 中有很多对象实现了这个接口。例如，对http 服务器发起请求的request 对象就是一个 Stream，还有stdout（标准输出）。
+Node.js，Stream 有四种流类型：
+Readable - 可读操作。
+Writable - 可写操作。
+Duplex - 可读可写操作.
+Transform - 操作被写入数据，然后读出结果。
+所有的 Stream 对象都是 EventEmitter 的实例。常用的事件有：
+data - 当有数据可读时触发。
+end - 没有更多的数据可读时触发。
+error - 在接收和写入过程中发生错误时触发。
+finish - 所有数据已被写入到底层系统时触发。
+
+setEncoding('utf8')设置编码
+
+七、模块系统
+文件和模块一一对应
+
+模块加载优先级：
+文件模块缓存区>原生模块—》是—》原生模块缓存区—》否—》原生模块——》缓存原生模块
+
+			—》否—》文件模块——》缓存文件模块
+
+
+http、fs、path等，原生模块。
+./mod或../mod，相对路径的文件模块。
+/pathtomodule/mod，绝对路径的文件模块。
+mod，非原生模块的文件模块。
+
+八、函数类似js函数，注意匿名函数的使用
+
+九、路由
+为路由提供请求的URL和其他需要的GET及POST参数，随后路由需要根据这些数据来执行相应的代码
+
+url和querystring模块
+
+十、全局对象
+JavaScript 中有一个特殊的对象，称为全局对象（Global Object），它及其所有属性都可以在程序的任何地方访问，即全局变量。
+在浏览器 JavaScript 中，通常 window 是全局对象， 而 Node.js 中的全局对象是 global，所有全局变量（除了 global 本身以外）都是 global 对象的属性。
+
+全局对象与全局变量
+global 最根本的作用是作为全局变量的宿主。按照 ECMAScript 的定义，满足以下条 件的变量是全局变量：
+在最外层定义的变量；
+全局对象的属性；
+隐式定义的变量（未定义直接赋值的变量）。
+当你定义一个全局变量时，这个变量同时也会成为全局对象的属性，反之亦然。需要注 意的是，在 Node.js 中你不可能在最外层定义变量，因为所有用户代码都是属于当前模块的， 而模块本身不是最外层上下文。
+注意： 永远使用 var 定义变量以避免引入全局变量，因为全局变量会污染 命名空间，提高代码的耦合风险。
+
+全局变量
+__filename ：表示当前正在执行的脚本的文件名。它将输出文件所在位置的绝对路径，且和命令行参数所指定的文件名不一定相同。 如果在模块中，返回的值是模块文件的路径。
+
+__dirname 表示当前执行脚本所在的目录
+
+setTimeout(cb, ms) 全局函数在指定的毫秒(ms)数后执行指定函数(cb)。：setTimeout() 只执行一次指定函数。
+返回一个代表定时器的句柄值。
+clearTimeout()
+setInterval()
+clearInterval()
+
+console 用于提供控制台标准输出，它是由 Internet Explorer 的 JScript 引擎提供的调试工具，后来逐渐成为浏览器的事实标准。用于向标准输出流（stdout）或标准错误流（stderr）输出字符。
+
+以下为 console 对象的方法:
+序号	方法 & 描述
+1	console.log([data][, ...])
+向标准输出流打印字符并以换行符结束。该方法接收若干 个参数，如果只有一个参数，则输出这个参数的字符串形式。如果有多个参数，则 以类似于C 语言 printf() 命令的格式输出。
+2	console.info([data][, ...])
+P该命令的作用是返回信息性消息，这个命令与console.log差别并不大，除了在chrome中只会输出文字外，其余的会显示一个蓝色的惊叹号。
+3	console.error([data][, ...])
+输出错误消息的。控制台在出现错误时会显示是红色的叉子。
+4	console.warn([data][, ...])
+输出警告消息。控制台出现有黄色的惊叹号。
+5	console.dir(obj[, options])
+用来对一个对象进行检查（inspect），并以易于阅读和打印的格式显示。
+6	console.time(label)
+输出时间，表示计时开始。
+7	console.timeEnd(label)
+结束时间，表示计时结束。
+8	console.trace(message[, ...])
+当前执行的代码在堆栈中的调用路径，这个测试函数运行很有帮助，只要给想测试的函数里面加入 console.trace 就行了。
+9	console.assert(value[, message][, ...])
+用于判断某个表达式或变量是否为真，接手两个参数，第一个参数是表达式，第二个参数是字符串。只有当第一个参数为false，才会输出第二个参数，否则不会有任何结果。
+
+console.log('byvoid%diovyb', 1991); 
+ byvoid1991iovyb
+console.log('byvoiddiovyb', 1991); 
+
+byvoiddiovyb 1991
+
+console.error()：与console.log() 用法相同，只是向标准错误流输出。
+console.trace()：向标准错误流输出当前的调用栈。
+
+
+process 是一个全局变量，即 global 对象的属性。
+它用于描述当前Node.js 进程状态的对象，提供了一个与操作系统的简单接口。通常在你写本地命令行程序的时候，少不了要 和它打交道。下面将会介绍 process 对象的一些最常用的成员方法。
+序号	事件 & 描述
+1	exit
+当进程准备退出时触发。
+2	beforeExit
+当 node 清空事件循环，并且没有其他安排时触发这个事件。通常来说，当没有进程安排时 node 退出，但是 'beforeExit' 的监听器可以异步调用，这样 node 就会继续执行。
+3	uncaughtException
+当一个异常冒泡回到事件循环，触发这个事件。如果给异常添加了监视器，默认的操作（打印堆栈跟踪信息并退出）就不会发生。
+4	Signal 事件
+当进程接收到信号时就触发。信号列表详见标准的 POSIX 信号名，如 SIGINT、SIGUSR1 等。
+
+process还提供的方法和属性
+
+十一、常用工具
+util 是一个Node.js 核心模块，提供常用函数的集合，用于弥补核心JavaScript 的功能 过于精简的不足。
+
+util.inherits(constructor, superConstructor)是一个实现对象间原型继承 的函数。
+JavaScript 的面向对象特性是基于原型的，与常见的基于类的不同。JavaScript 没有 提供对象继承的语言级别特性，而是通过原型复制来实现的。
+
+
+util.inspect(object,[showHidden],[depth],[colors])是一个将任意对象转换 为字符串的方法，通常用于调试和错误输出。它至少接受一个参数 object，即要转换的对象。
+showHidden 是一个可选参数，如果值为 true，将会输出更多隐藏信息。
+depth 表示最大递归的层数，如果对象很复杂，你可以指定层数以控制输出信息的多 少。如果不指定depth，默认会递归2层，指定为 null 表示将不限递归层数完整遍历对象。 如果color 值为 true，输出格式将会以ANSI 颜色编码，通常用于在终端显示更漂亮 的效果。
+特别要指出的是，util.inspect 并不会简单地直接把对象转换为字符串，即使该对 象定义了toString 方法也不会调用。
+
+util.isArray(object)
+如果给定的参数 "object" 是一个数组返回true，否则返回false。
+
+
+util.isRegExp(object)
+如果给定的参数 "object" 是一个正则表达式返回true，否则返回false。
+
+util.isDate(object)
+如果给定的参数 "object" 是一个日期返回true，否则返回false。
+
+util.isError(object)
+如果给定的参数 "object" 是一个错误对象返回true，否则返回false。
+
