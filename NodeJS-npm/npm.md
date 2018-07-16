@@ -1,6 +1,9 @@
+# npm
+
 > 随着nodejs流行，npm伴随nodejs逐步成长起来，安装nodejs以后就自动安装了npm。
 
-## npm是什么?
+## npm是什么
+
 npm 是 nodejs 的包管理和分发工具。它 可以让 javascript 开发者能够更加轻松的共享代码和共用代码片段，并且通过 npm 管理你分享的代码也很方便快捷和简单。
 
 ### npm 淘宝镜像
@@ -21,19 +24,23 @@ npm config get registry
 // 或
 npm info express
 ```
-**cnpm**
 
-```
-$ npm install -g cnpm --registry=https://registry.npm.taobao.org
+**cnpm**配置
+
+```npm
+npm install -g cnpm --registry=https://registry.npm.taobao.org
 ```
 
 ### npm升级
+
 ```
   npm install npm -g
   // 查看当前版本
   npm -v 
 ```
+
 ## 安装方式（全局 or 局部）
+
 npm 提供了两种包的安装形式：局部安装和全局安装。你可以通过你的项目使用情况选择如何安装。如果你的项目依赖于某个包，那么建议将改包安装到局部。其他其他条件下，比如你要在命令行工具中使用这个包，可选择在全局安装。
 
 - 全局安装示例：
@@ -44,15 +51,19 @@ npm install package -g
 一般这样安装都是以工具，命令行形存在
 
 - 局部安装示例：
+
 **dependencies**
+
 ```
 npm install package --save
 ```
 
 **devDependencies**
+
 ```
 npm install package --save-dev
 ```
+
 这是两种局部包安装
 
 >一个node package常用有两种依赖，一种是dependencies一种是devDependencies，其中前者依赖的项该是正常运行该包时所需要的依赖项，而后者则是开发的时候需要的依赖项。
@@ -70,7 +81,7 @@ npm install package --save-dev
 -O	--save-optional	添加依赖关系到optionalDependencies下
 optionalDependencies一般用的不多。可选的依赖
 
-###几种安装形式和卸载
+### 几种安装形式和卸载
 
 - 普通安装
 ```
@@ -122,13 +133,13 @@ npm uninstall jquery
 name：填写包的名字，默认是你这个文件夹的名字。
 
 >如果你这个东西将来要做成一个npm包发布（后面说怎么发布一个npm包），就需要注意了。你需要去npm上找一下，有没有同名的包，npm search 包名，如果没有，恭喜你可以注册。如果存在，那你只能自己改名了。没办法，先到先得。
+
 - version：包的版本，默认是1.0.0
 - description：用一句话描述你的包是干嘛用的，随便写点啥也可以不写直接回车了
 - entry point：入口文件，默认是index.js，就是引入这个包就可以运行的。
 
-- index.js
-需要些一行这个代码
-`module.exports=require('./lib')`  这个就是你需要用包地址
+- index.js: 需要些一行这个代码`module.exports=require('./lib')`  这个就是你需要用包地址
+
 - `test command`：测试命令。一般都用不上跳过了
 - `git repository`：这个是git仓库地址，如果你的包是先放到github上或者其他git仓库里，这时候你的文件夹里面会存在一个隐藏的.git目录，npm会读到这个目录作为这一项的默认值。如果没有的话，直接回车继续。
 -`keyword`：这个是一个重点，这个关系到有多少人会搜到你的npm包。尽量使用贴切的关键字作为这个包的索引。里面是一个字符串数组
@@ -180,7 +191,7 @@ name：填写包的名字，默认是你这个文件夹的名字。
 ### npm包删除
 >有发布就有删除，删除好像有个限制，如果大于24小时，需要联系npm管理员删除。
 ```
-npm unpublish 包名
+npm unpublish 包名 --force
 ```
 
 ## npm其他常用命名
@@ -219,11 +230,13 @@ npm list -g --depth=0
 ## 依赖版本解释
 
 ### ~和^的作用和区别是什么
+
 一般版本是1.0.0（大.中.小）
 会匹配最近的小版本依赖包，比如1.2.3会匹配所有1.2.x版本，但是不包括1.3.0
 ^会匹配最新的中版本依赖包，比如^1.2.3会匹配所有1.x.x的包，包括1.3.0，但是不包括2.0.0
 
 ### 其他版本号
+
 “jquery”： “2.0.1” 等于当前版本
 “jquery”： “>=1.0.2 <2.1.2” 大于等于version 小于version
 “jquery”： “>1.0.2 <=2.3.4” 大于version 小于等于version
@@ -238,7 +251,6 @@ npm list -g --depth=0
 常用就这些，一般就用~和^或者直接写版本
 
 > 以上就是npm常用一些小知识。
-
 
 ## 参考
 
