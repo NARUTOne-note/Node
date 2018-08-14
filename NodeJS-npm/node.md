@@ -5,6 +5,7 @@
 - [Babel 入门教程](http://www.ruanyifeng.com/blog/2016/01/babel.html)
 - [如何发布node模块到npm社区](https://github.com/muwenzi/Program-Blog/issues/12)
 - [nvm](https://www.hi-linux.com/posts/51355.html)
+- [nvm、nrm、npm 安装和使用详解](https://blog.csdn.net/qq_27626333/article/details/77857223)
 
 ## 配置config
 
