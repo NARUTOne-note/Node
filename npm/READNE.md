@@ -255,3 +255,9 @@ npm list -g --depth=0
 ## 参考
 
 - [npm 和 yarn 缓存策略对比](https://segmentfault.com/a/1190000009709213)
+- [Yarn 介绍](http://qianduan.guru/2016/11/09/yarn-vs-npm/)
+- [npm 发布](https://cnodejs.org/topic/5364dcde31a870830700b847)
+- [Babel 入门教程](http://www.ruanyifeng.com/blog/2016/01/babel.html)
+- [如何发布node模块到npm社区](https://github.com/muwenzi/Program-Blog/issues/12)
+- [nvm](https://www.hi-linux.com/posts/51355.html)
+- [nvm、nrm、npm 安装和使用详解](https://blog.csdn.net/qq_27626333/article/details/77857223)
