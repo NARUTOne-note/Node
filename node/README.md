@@ -1,6 +1,6 @@
 # node
 
-> JS解析器，NodeJS中的JS的用途是操作磁盘文件或搭建HTTP服务器，NodeJS就相应提供了fs、http等内置对象。
+> JS解析器，CMD模块系统，NodeJS中的JS的用途是操作磁盘文件或搭建HTTP服务器，NodeJS就相应提供了fs、http等内置对象。
 
 ## use
 
