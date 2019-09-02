@@ -254,6 +254,7 @@ npm list -g --depth=0
 
 ## 参考
 
+- [告诉你为何以及如何搭建一个私有的npm仓库](https://zhuanlan.zhihu.com/p/35773211)
 - [npm 和 yarn 缓存策略对比](https://segmentfault.com/a/1190000009709213)
 - [Yarn 介绍](http://qianduan.guru/2016/11/09/yarn-vs-npm/)
 - [npm 发布](https://cnodejs.org/topic/5364dcde31a870830700b847)
