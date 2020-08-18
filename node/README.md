@@ -14,4 +14,6 @@
 
 ## API
 
+> 具体使用，看文档
+
 - [Nodejs API](http://nodejs.cn/api/)
