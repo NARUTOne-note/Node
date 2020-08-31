@@ -1,0 +1,17 @@
+{
+  "name": "morgan-log",
+  "version": "1.0.0",
+  "description": "> morgan是express默认的日志中间件，也可以脱离express，作为node.js的日志组件单独使用",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "file-stream-rotator": "^0.5.7",
+    "morgan": "^1.10.0"
+  }
+}

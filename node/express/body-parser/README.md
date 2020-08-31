@@ -1,4 +1,4 @@
-## 写在前面
+# 写在前面
 
 `body-parser`是非常常用的一个`express`中间件，作用是对http请求体进行解析。使用非常简单，以下两行代码已经覆盖了大部分的使用场景。
 
@@ -147,7 +147,7 @@ var parsePostBody = function (req, done) {
 
 var server = http.createServer(function (req, res) {
     parsePostBody(req, (chunks) => {
-        var json = JSON.parse( chunks.toString() );    // 关键代码    
+        var json = JSON.parse( chunks.toString() );    // 关键代码
         res.end(`Your nick is ${json.nick}`)
     });
 });
@@ -220,7 +220,7 @@ server.listen(3000);
 
 客户端请求如下，有两个要点。
 
-1. 编码声明：在`Content-Type`最后加上` ;charset=gbk`
+1. 编码声明：在`Content-Type`最后加上 `;charset=gbk`
 2. 请求体编码：这里借助了`iconv-lite`，对请求体进行编码`iconv.encode('程序猿小卡', encoding)`
 
 ```javascript
@@ -236,7 +236,7 @@ var options = {
     method: 'POST',
     headers: {
         'Content-Type': 'text/plain; charset=' + encoding,
-        'Content-Encoding': 'identity',        
+        'Content-Encoding': 'identity',
     }
 };
 
@@ -368,6 +368,6 @@ server.listen(3000);
 
 ## 相关链接
 
-https://github.com/expressjs/body-parser/
+[body-parser](https://github.com/expressjs/body-parser/)
 
-https://github.com/ashtuchkin/iconv-lite
+[iconv-lite](https://github.com/ashtuchkin/iconv-lite)
