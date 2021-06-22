@@ -6,30 +6,37 @@
 
 npm 是 nodejs 的包管理和分发工具。它 可以让 javascript 开发者能够更加轻松的共享代码和共用代码片段，并且通过 npm 管理你分享的代码也很方便快捷和简单。
 
-### npm 淘宝镜像
+### npm 多源镜像和企业级部署私服原理
+
+npm 中的源`registry`，其实就是一个查询服务
 
 - 临时使用
 
-```js
+```bash
 npm --registry https://registry.npm.taobao.org install express
 ```
 
 - 持久使用
 
-```js
+```bash
 npm config set registry https://registry.npm.taobao.org
 
-// 配置后可通过下面方式来验证是否成功
+# 配置后可通过下面方式来验证是否成功
 npm config get registry
-// 或
+# 或
 npm info express
 ```
 
 **cnpm**配置
 
-```npm
+```bash
 npm install -g cnpm --registry=https://registry.npm.taobao.org
 ```
+
+- 使用 `nrm` 管理镜像源
+- 私有源原理：在 client 和外部 npm 之间，并通过 group repository 合并 npm 仓库以及私有仓库，这样就起到了代理转发的作用。
+
+![npm 配置优先级](./npm-config-level.png)
 
 ### npm升级
 
@@ -41,7 +48,13 @@ npm install -g cnpm --registry=https://registry.npm.taobao.org
 
 ## 安装方式（全局 or 局部）
 
-npm 提供了两种包的安装形式：局部安装和全局安装。你可以通过你的项目使用情况选择如何安装。如果你的项目依赖于某个包，那么建议将改包安装到局部。其他其他条件下，比如你要在命令行工具中使用这个包，可选择在全局安装。
+![npm install 机制](./npm-install.png)
+
+- 检查并获取 npm 配置，这里的优先级为：项目级的 `.npmrc 文件 > 用户级的 .npmrc 文件> 全局级的 .npmrc 文件 > npm 内置的 .npmrc 文件`
+- 检查 package-lock.json 与 package.json
+- 检查本地化缓存，使用缓存
+
+npm 提供了两种包的安装形式：**局部安装和全局安装**。你可以通过你的项目使用情况选择如何安装。如果你的项目依赖于某个包，那么建议将改包安装到局部。其他其他条件下，比如你要在命令行工具中使用这个包，可选择在全局安装。
 
 - 全局安装示例：
 
@@ -196,7 +209,7 @@ name：填写包的名字，默认是你这个文件夹的名字。
 我们可以在命令行运行`npm run test`
 接着就会输出`Error: no test specified`
 
-目前比较火的`webpack`都是使用npm来管理命令行，然后运行`npm run xxx`
+`webpack`都是使用npm来管理命令行，然后运行`npm run xxx`
 
 ## 创建用户
 
@@ -328,6 +341,27 @@ npm unlink package
 
 - 为目标 npm 模块创建软链接，将其链接到全局 node 模块安装路径 /usr/local/lib/node_modules/
 - 为目标 npm 模块的可执行 bin 文件创建软链接，将其链接到全局 node 命令安装路径 /usr/local/bin/。
+
+## npx
+
+npx 由 npm v5.2 版本引入，解决了 npm 的一些使用快速开发、调试，以及项目内使用全局模块的痛点。
+
+- 可以直接省去script命令，去执行一些命令
+
+```bash
+# 例：npm run eslint 
+npx eslint --init
+
+npx eslint yourfile.js
+
+```
+
+- npx 执行模块时会优先安装依赖，但是在安装执行后便删除此依赖，这就避免了全局安装模块带来的问题。
+
+```bash
+# npx 会将 create-react-app 下载到一个临时目录，使用以后再删除
+npx create-react-app cra-project
+```
 
 ## 参考
 
