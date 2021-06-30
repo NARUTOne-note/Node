@@ -115,6 +115,7 @@ npm version prerelease
 ```bash
 # npm 6.4.0 以后可以使用 --preid 选项
 npm version prerelease --preid=beta
+npm version prerelease --preid=alpha
 ```
 
 `0.0.1`将变为`0.0.2-beta.0`，您也可以选择手动升级：
