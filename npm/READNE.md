@@ -281,6 +281,7 @@ npm view 查看模块的注册信息
 npm adduser  用户登录
 npm publish 发布模块
 npm access 在发布的包上设置访问级别
+npm config get cache 查看npm缓存
 # 清除缓存
 npm cache clean
 
