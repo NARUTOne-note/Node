@@ -94,7 +94,26 @@ npm install package --save-dev
 - `-S --save` 添加依赖关系到dependencies下
 - `-D --save-dev` 添加依赖关系到devDependencies下
 - `-O --save-optional` 添加依赖关系到optionalDependencies下
-optionalDependencies一般用的不多。可选的依赖
+
+- `optionalDependencies` 一般用的不多, 可选的依赖
+- `peerDependencies` 同版本依赖，规范安装库需要对应版本依赖
+- `bundledDependencies` 捆绑依赖，bundledDependencies 中指定的依赖包，必须先在 dependencies 和 devDependencies 声明过，否则在 `npm pack` 阶段会进行报错。
+
+### CI下安装
+
+专门为 CI 环境准备的安装命令
+
+```bash
+npm ci
+```
+
+- `npm ci` 要求项目中必须存在 `package-lock.json` 或 `npm-shrinkwrap.json`；
+- `npm ci` 完全根据 `package-lock.json` 安装依赖，这可以保证整个开发团队都使用版本完全一致的依赖；
+- 正因为 `npm ci` 完全根据 `package-lock.json` 安装依赖，在安装过程中，它不需要计算求解依赖满足问题、构造依赖树，因此安装过程会更加迅速；
+- `npm ci` 在执行安装时，会先删除项目中现有的 `node_modules`，然后全新安装；
+- `npm ci` 只能一次安装整个项目所有依赖包，无法安装单个依赖包；
+- 如果 `package-lock.json` 和 `package.json` 冲突，那么 `npm ci` 会直接报错，并非更新 `lockfiles`；
+- `npm ci` 永远不会改变 `package.json` 和 `package-lock.json`。
 
 ### 几种安装形式和卸载
 
