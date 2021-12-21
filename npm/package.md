@@ -35,6 +35,97 @@ npm install -S xxxx
 }
 ```
 
+## 非官方属性
+
+- `yarn`相关
+
+```json
+{
+  // 只允许给定依赖的一个版本，yarn install --flat 
+  "flat": true,
+  // 允许覆盖特定嵌套依赖项的版本
+  "resolutions": {
+    "transitive-package-1": "0.0.29",
+    "transitive-package-2": "file:./local-forks/transitive-package-2",
+    "dependencies-package-1/transitive-package-3": "^2.1.1"
+  }
+}
+```
+
+- `unpkg` npm 上所有的文件都开启 cdn 服务
+
+```json
+// jquery
+{
+  "unpkg": "dist/jquery.js"
+}
+```
+
+```bash
+# [latestVersion] 指最新版本号，pkg 指 package.json
+
+# 定义了 unpkg 属性时
+https://unpkg.com/jquery@[latestVersion]/[pkg.unpkg]
+#未定义 unpkg 属性时，将回退到 main 属性
+https://unpkg.com/jquery@[latestVersion]/[pkg.main] 
+```
+
+- `TypeScript`相关
+
+```json
+{
+  // ts类型定义入口文件
+  "types": "./lib/main.d.ts"
+}
+```
+
+- browserslist 浏览器兼容
+
+```json
+{
+  "browserslist": [
+    "> 1%",
+    "last 2 versions"
+  ]
+}
+```
+
+- 发行打包相关
+
+```json
+{
+  // 定义es6+模块入口文件，构建工具（webpack/rollup）在构建项目的时候，如果发现了这个字段，会首先使用这个字段指向的文件，如果未定义，则回退到 main 字段指向的文件
+  "module": "./es/index.js",
+  // 供浏览器使用的入口文件, 未定义则回退到 main 字段指向的文件
+  "browser": "./lib/index.b.js",
+  // 使用 es 模块化规范，stage 4 特性的源代码。
+  // "esnext": "main-esnext.js"
+  "esnext": {
+    "main": "main-esnext.js",
+    "browser": "browser-specific-main-esnext.js"
+  }
+}
+```
+
+- `sideEffects` 副作用(webpack)
+
+`false || string[]`
+
+让 webpack 的 `tree-shaking` 更高效，以指示项目中哪些文件是“pure”的。false 表示所有代码都没有副作用，因此webpack可以安全地修剪未使用的导出。
+如果代码确实有一些副作用，则可以提供一个数组，数组接受相关文件的相对，绝对和全局模式。
+如果您在项目中使用类似`css-loader`的东西并 import 一个 CSS 文件，则需要将其添加到 side effect 列表中，这样就不会在生产模式中无意中将其删除
+`side effect(副作用)` 的定义是，在导入时会执行特殊行为的代码，而不是仅仅暴露一个 export 或多个 export。举例说明，例如 polyfill，它影响全局作用域，并且通常不提供 export
+
+```json
+{
+  "sideEffects": [
+    "./src/some-side-effectful-file.js",
+    "*.css"
+  ]
+}
+
+```
+
 ## npm script
 
 > npm 脚本命令, 使用 `npm run xxx` 执行，系统都会自动新建一个`shell`(一般是Bash)，在这个shell里面执行指定的脚本命令。因此 **凡是能在 shell 中允许的脚本，都可以写在npm scripts中**。
