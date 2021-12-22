@@ -221,7 +221,7 @@ name：填写包的名字，默认是你这个文件夹的名字。
 
 ```json
 "scripts": {
-    test： “echo \”Error: no test specified\" && exit 1"
+    "test": "jest"
 }
 ```
 
@@ -229,6 +229,27 @@ name：填写包的名字，默认是你这个文件夹的名字。
 接着就会输出`Error: no test specified`
 
 `webpack`都是使用npm来管理命令行，然后运行`npm run xxx`
+
+**预设命令**:
+
+- `prepublish`：在npm publish命令之前运行（也会在不带参数的npm install命令前运行，详情在下段描述）
+- `prepare`: 在两种情况前运行，一是npm publish命令前，二是不带参数的npm install命令；它会在prepublish之后、prepublishOnly之前执行
+- `prepublishOnly`: 在npm publish命令前执行
+- `publish`,`postpublish`： 在npm publish命令后执行
+- `preinstall`: 在npm install命令前执行
+- `install`,`postinstall`： 在npm install命令后执行
+- `preuninstall`，`uninstall`: 在npm uninstall命令前执行
+- `postuninstall` ： 在npm uninstall命令后执行
+- `preversion`：在改变包的version前执行
+- `version`： 在改变包的version后，但提交之前执行
+- `postversion`： 在提交version变更后执行
+- `pretest`， `test`， `posttest`： 伴随npm test命令
+- `prestop`， `stop`， `poststop`： 伴随npm stop命令
+- `restart`, `start`, `poststart`: 伴随 npm start命令
+- `prerestart`， `restart`， `poststart`： 伴随 npm restart命令。提示：假如scripts里没有写restart命令，npm默认会运行start、stop
+- `preshrinkwrap`, `shrinkwrap`, `postshrinkwrap`: 伴随 npm shrinkwrap 命令（用于固定依赖包版本）
+
+所有的script都可以用 npm run-script < stage >命令执行, 所有的script都有pre和post钩子，会依照`prescript` - `script` - `postscript`顺序执行。
 
 ## 创建用户
 
