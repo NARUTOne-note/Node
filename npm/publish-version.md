@@ -1,7 +1,6 @@
 # npm version
 
-目前项目组内没有一套版本管理规范来对`node package`进行规范，每个人对版本号的理解差异导致`package`版本号混乱，本文档将给出一套规范来解决该问题，并且在次规范的基础上给出一套`node package`发包最佳实践。
-如果您对`node package`的语义化版本号已经非常了解，可直接跳到**最佳实践**部分开始阅读
+> 使用版本管理规范来对`node package`进行规范，个人对版本号的理解差异导致`package`版本号混乱。
 
 **文档适用范围**：包括所有发布到npm上的node和前端package
 
@@ -39,7 +38,7 @@ alpha、beta、rc
 ### 配合Tag灵活控制版本输出
 
 思考一个问题：**npm install ，会安装哪个版本的`package`？** 最新版本？
-其实`node package`也有tag的功能，跟git的tag有点类似，目的就是给某个版本的`package`打标签。通过npm dist-tag ls指令可以查看某个`package`的所有tag，以vue为例：
+其实`node package`也有tag的功能，跟git的tag有点类似，目的就是给某个版本的`package`打标签。通过`npm dist-tag ls`指令可以查看某个`package`的所有tag，以vue为例：
 
 ```bash
 npm dist-tag ls vue
@@ -263,7 +262,27 @@ npm dist-tag add ossa@1.0.1-beta.0 beta
 
 上面的例子已包括了常见的发包情形，后面的以此类推，请在发包时严格遵守。
 
+## 撤销发布
+
+> 一般不建议撤销或删除发布，可以发布修复版
+
+```bash
+# 废弃
+npm deprecate <pkg>[@<version>] <message>
+# 删除
+npx force-unpublish pkg <message>
+```
+
+## 查看版本
+
+```bash
+# 当前latest
+npm view pkg
+# 所有版本list
+npm view pkg versions
+```
+
 ## 参考文章
 
-1. [node-semver](https://github.com/npm/node-semver#prerelease-identifiers)
-2. [npm-version](https://docs.npmjs.com/cli/version?source=post_page)
+1、[node-semver](https://github.com/npm/node-semver#prerelease-identifiers)
+2、[npm-version](https://docs.npmjs.com/cli/version?source=post_page)
