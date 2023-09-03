@@ -8,11 +8,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CounterMiddleware } from '../counter/counter.middleware';
 import { BoyService } from '../boy/boy.service';
 import { Girl } from './entities/girl.entity';
+import { GirlDetail } from './entities/girlDetail.entity';
 import { GirlController } from './girl.controller';
 import { GirlService } from './girl.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Girl])],
+  imports: [TypeOrmModule.forFeature([Girl, GirlDetail])],
   controllers: [GirlController],
   providers: [
     GirlService, // 注入服务

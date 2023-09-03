@@ -16,7 +16,7 @@ export class GirlController {
   constructor(
     private girlService: GirlService,
     private BoyService: BoyService,
-    @Inject('Config') private shopName: string,
+    @Inject('Config') private shopName: string, // 全局模块注入
     @Inject('GirlArray') private girls: string[],
     @Inject('hook') private useHook: string,
   ) {} // 自动注入实例化 new xx()

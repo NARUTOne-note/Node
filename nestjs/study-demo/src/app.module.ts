@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { GirlModule } from './girl/girl.module';
 import { BoyModule } from './boy/boy.module';
 import { ConfigModule } from './config/config.module';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { ConfigModule } from './config/config.module';
     }),
     GirlModule,
     BoyModule,
-    ConfigModule,
+    ConfigModule.forRoot('Root config'),
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [AppService],

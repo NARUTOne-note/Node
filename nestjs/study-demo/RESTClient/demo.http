@@ -16,6 +16,6 @@
 
 # GET http://localhost:3000/api/girl/update/2
 
-# GET http://localhost:3000/api/girl
+GET http://localhost:3000/api/girl
 
-GET http://localhost:3000/api/girl/findGirlByName/丫
+# GET http://localhost:3000/api/girl/findGirlByName/丫
