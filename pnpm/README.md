@@ -80,16 +80,12 @@ pnpm i
 
 ```bash
 # 在本地模块目录下执行
-cd my-local-module
-pnpm link
-# 取消全局链接（pnpm 6+）
-pnpm unplug -g my-local-module
-# 对于早期版本的pnpm可能需要卸载模块
+pnpm link --global
+# 卸载模块
 pnpm uninstall -g my-local-module
 
-# 在需要引用该模块的项目目录下执行
-cd my-project
-pnpm link my-local-module
+# 项目目录下执行
+pnpm link --global my-local-module
 # 取消项目对全局模块的链接引用
 pnpm unlink my-local-module
 ```
