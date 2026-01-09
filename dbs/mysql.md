@@ -69,6 +69,17 @@ show tables;
 2. MySQL 中支持多种类型的运算符，包括：算术运算符（`+`、`-`、`*`、`/`、`%`）、比较运算符（`=`、`<>`、`<=>`、`<`、`<=`、`>`、`>=`、`BETWEEN...AND..`.、`IN`、`IS NULL`、`IS NOT NULL`、`LIKE`、`RLIKE`、`REGEXP`）、逻辑运算符（`NOT`、`AND`、`OR`、`XOR`）和位运算符（`&`、`|`、`^`、`~`、`>>`、`<<`），我们可以在 DML 中使用这些运算符处理数据。
 3. 在查询数据时，可以在`SELECT`语句及其子句（如`WHERE`子句、`ORDER BY`子句、`HAVING`子句等）中使用函数，这些函数包括字符串函数、数值函数、时间日期函数、流程函数等，如下面的表格所示。
 
+- where：查询条件，比如 where id=1
+- as：别名，比如 select xxx as 'yyy'
+- and: 连接多个条件
+- in/not in：集合查找，比如 where a in (1,2)
+- between and：区间查找，比如 where a between 1 and 10
+- limit：分页，比如 limit 0,5
+- order by：排序，可以指定先根据什么升序、如果相等再根据什么降序，比如 order by a desc,b asc
+- group by：分组，比如 group by aaa
+- having：分组之后再过滤，比如 group by aaa having xxx > 5
+- distinct：去重
+
 常用字符串函数。
 
    | 函数                        | 功能                                                  |
