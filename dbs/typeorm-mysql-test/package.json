@@ -1,0 +1,11 @@
+{
+   "name": "typeorm-mysql-test",
+   "version": "0.0.1",
+   "description": "Awesome project developed with TypeORM.",
+   "type": "commonjs",
+   "dependencies": {
+      "mysql2": "^3.16.1",
+      "typeorm": "^0.3.28"
+   },
+   "scripts": {}
+}

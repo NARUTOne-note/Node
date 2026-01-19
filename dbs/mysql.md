@@ -195,3 +195,61 @@ show tables;
 3. 使用**前缀索引**可以减少索引占用的空间，内存中可以缓存更多的索引。
 4. **索引不是越多越好**，虽然索引加速了读操作（查询），但是写操作（增、删、改）都会变得更慢，因为数据的变化会导致索引的更新，就如同书籍章节的增删需要更新目录一样。
 5. 使用 InnoDB 存储引擎时，表的普通索引都会保存主键的值，所以**主键要尽可能选择较短的数据类型**，这样可以有效的减少索引占用的空间，提升索引的缓存效果。
+
+### 事务
+
+> 事务（transaction）
+
+当修改多个表的时候，并且这些表的数据是有关联的时候，事务是必须的。要不全部成功，要不全部不成功。
+
+START TRANSACTION 开启事务后所有的 sql 语句都可以 ROLLBACK，除非执行了 COMMIT 完成这段事务。
+还可以设置几个 SAVEPOINT，这样可以 ROLLBACK TO 任何一个 SAVEPOINT 的位置
+
+**隔离级别**：主要是数据一致性和性能的差别，一致性越好，并发性能就越差
+
+1、READ UNCOMMITTED：可以读到别的事务尚未提交的数据
+
+- 这个事务内第一次读的数据是 aaa，下次读可能就是 bbb 了，这个问题叫做**不可重复读**。
+- 到的就是临时数据，这个问题叫做**脏读**。
+
+2、READ COMMITTED：只读取别的事务已提交的数据。
+
+- 没有脏读问题
+- 不可重复读的问题依然存在。不只是数据不一样，可能你两次读取到的记录行数也不一样，这叫做**幻读**。
+
+3、REPEATABLE READ：在同一事务内，多次读取数据将保证结果相同
+
+- 保证了读取到的数据一样，但是不保证行数一样，也就是说解决了不可重复读的问题，但仍然存在幻读的问题。
+
+4、SERIALIZABLE：在同一时间只允许一个事务修改数据。
+
+- 事务一个个执行，各种问题都没有了
+- 性能很差，只能一个个的事务执行
+
+### 视图 view
+
+> 视图可以简化查询、控制权限等
+
+### typeorm
+
+具体的 EntityManager 和 Repository 的方法有这些：
+
+save：新增或者修改 Entity，如果传入了 id 会先 select 再决定修改还新增
+update：直接修改 Entity，不会先 select
+insert：直接插入 Entity
+delete：删除 Entity，通过 id
+remove：删除 Entity，通过对象
+find：查找多条记录，可以指定 where、order by 等条件
+findBy：查找多条记录，第二个参数直接指定 where 条件，更简便一点
+findAndCount：查找多条记录，并返回总数量
+findByAndCount：根据条件查找多条记录，并返回总数量
+findOne：查找单条记录，可以指定 where、order by 等条件
+findOneBy：查找单条记录，第二个参数直接指定 where 条件，更简便一点
+findOneOrFail：查找失败会抛 EntityNotFoundError 的异常
+query：直接执行 sql 语句
+createQueryBuilder：创建复杂 sql 语句，比如 join 多个 Entity 的查询
+transaction：包裹一层事务的 sql
+getRepository：拿到对单个 Entity 操作的类，方法同 EntityManager
+
+一对一关系的映射通过 @OneToOne 装饰器来声明，维持外键列的 Entity 添加 @JoinColumn 装饰器。
+通过 @OneToOne 装饰器的 onDelete、onUpdate 参数设置级联删除和更新的方式，比如 CASCADE、SET NULL 等。
