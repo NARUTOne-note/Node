@@ -253,3 +253,5 @@ getRepository：拿到对单个 Entity 操作的类，方法同 EntityManager
 
 一对一关系的映射通过 @OneToOne 装饰器来声明，维持外键列的 Entity 添加 @JoinColumn 装饰器。
 通过 @OneToOne 装饰器的 onDelete、onUpdate 参数设置级联删除和更新的方式，比如 CASCADE、SET NULL 等。
+一对多：@OneToMore
+多对多：通过 @ManyToMany 和 @JoinTable 来声明的。
