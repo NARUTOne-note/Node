@@ -51,11 +51,37 @@
 
 Nginx默认在 `conf/nginx.conf` 文件中配置了一个server块, http块中可以包含多个server块
 
-```js
+```bash
 http{
   server{
     listen 80;
     server_name  localhost;
+  }
+}
+```
+
+### upstream
+
+有 4 种负载均衡策略：
+
+- 轮询：默认方式。
+- weight：在轮询基础上增加权重，也就是轮询到的几率不同。
+- ip_hash：按照 ip 的 hash 分配，保证每个访客的请求固定访问一个服务器，解决 session 问题。
+- fair：按照响应时间来分配，这个需要安装 nginx-upstream-fair 插件
+
+```bash
+upstream xx-server {
+  server 192.168.x.x:3001;
+  server 192.168.x.x:3002;
+}
+
+server {
+  listen: 80;
+  server_name  localhost;
+
+  location ^~ /api {
+    proxy_set_header name xxx;
+    proxy_pass http://xx-server;
   }
 }
 ```
@@ -174,8 +200,8 @@ location / {
 
 > 代理有正向代理和反向代理两种，都是用proxy_pass指令来实现
 
-正向代理: 的对象是用户，用户知道访问那个服务器，而服务器不知道是那个用户访问它。
-反向代理: 的对象是服务器，用户不知道访问了那个服务器，而服务器知道那个用户访问它。
+正向代理: 对象是用户，用户知道访问那个服务器，而服务器不知道是那个用户访问它。 user -> nginx -> api server
+反向代理: 对象是服务器，用户不知道访问了那个服务器，而服务器知道那个用户访问它。 user -> <- nginx <- api server
 
 ```js
 server{

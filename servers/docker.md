@@ -44,3 +44,59 @@ EXPOSE 8000
 # 容器启动的时候执行的命令
 CMD ["http-server", "-p", "8000"]
 ```
+
+## docker compose
+
+示例：
+
+```yaml
+services:
+  nest-app:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+      # 依赖镜像，先启动这两
+    depends_on:
+      - mysql-container
+      - redis-container
+    ports:
+      - '3000:3000'
+  mysql-container:
+    image: mysql
+    ports:
+      - '3306:3306'
+    volumes:
+      - /Users/guang/mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: aaa
+      MYSQL_ROOT_PASSWORD: guang
+  redis-container:
+    image: redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - /Users/guang/aaa:/data
+
+```
+
+通信方式：
+
+- 通过端口访问， nest 的容器里通过宿主机 ip 访问这两个服务的
+- 通过 docker network create 创建一个桥接网络，然后 docker run 的时候指定 --network，这样 3 个容器就可以通过容器名互相访问了。
+
+## 重启
+
+Docker 是支持自动重启的，可以在 docker run 的时候通过 --restart 指定重启策略，或者 Docker Compose 配置文件里配置 restart。
+
+有 4 种重启策略：
+
+- no: 容器退出不自动重启（默认值）
+- always：容器退出总是自动重启，除非 docker stop。
+- on-failure：容器非正常退出才自动重启，还可以指定重启次数，如 on-failure:5
+- unless-stopped：容器退出总是自动重启，除非 docker stop
+
+重启策略为 always 的容器在 Docker Deamon 重启的时候容器也会重启，而 unless-stopped 的不会。
+
+其实我们用 PM2 也是主要用它进程崩溃的时候重启的功能，而在有了 Docker 之后，用它的必要性就不大了。
+
+当然，进程重启的速度肯定是比容器重启的速度快一些的，如果只是 Docker 部署，可以结合 pm2-runtime 来做进程的重启。
