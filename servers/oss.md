@@ -46,4 +46,9 @@ AccessKey，简称 AK，指的是访问身份验证中用到的AccessKeyId 和Ac
 
 总而言之，OSS非常适合存储静态资源，例如，用于存储用户定义的内容：图像和电影，存储备份文件和日志。
 
+## OSS服务
 
+遵循 AWS 的 Simple Storage Service（S3）规范的，简称 S3 规范。
+
+- 阿里云 oss
+- minio 搭建私有 oss 服务
