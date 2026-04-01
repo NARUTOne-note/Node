@@ -85,7 +85,9 @@ Docker 架构的工作流程：
 
 ## 准备
 
-[docker 官网](https://www.docker.com/)
+[docker 官网](https://www.docker.com/) 下载客户端
+
+window 使用 powershell 执行
 
 基本命令
 
@@ -102,9 +104,52 @@ docker ps
 # 构建镜像（基于当前目录的Dockerfile）
 docker build -t my-app .
 
+# 使用 ubuntu 镜像启动一个容器，参数为以命令行模式进入该容器（加上 -d 则不会进入容器）
+docker run -it ubuntu /bin/bash
+
 # 进入容器内部
-docker exec -it <容器ID> /bin/bash
+docker exec -it <容器ID/name> /bin/bash
+
+# 推出容器
+exit
+
 ```
+
+常用的 Docker 客户端命令：
+
+| 命令 | 功能 | 示例 |
+| --- | --- | --- |
+| docker run | 启动一个新的容器并运行命令 | docker run -d ubuntu |
+| docker ps | 列出当前正在运行的容器 | docker ps |
+| docker ps -a | 列出所有容器（包括已停止的容器） | docker ps -a |
+| docker build | 使用 Dockerfile 构建镜像，`.` 代表上下文路径  | docker build -t my-image . |
+| docker images | 列出本地存储的所有镜像 | docker images |
+| docker pull | 从 Docker 仓库拉取镜像 | docker pull ubuntu |
+| docker push | 将镜像推送到 Docker 仓库 | docker push my-image |
+| docker exec | 在运行的容器中执行命令 | docker exec -it container_name bash |
+| docker stop | 停止一个或多个容器 | docker stop container_name |
+| docker start | 启动已停止的容器 | docker start container_name |
+| docker restart | 重启一个容器 | docker restart container_name |
+| docker rm | 删除一个或多个容器 | docker rm container_name |
+| docker rmi | 删除一个或多个镜像 | docker rmi my-image |
+| docker logs | 查看容器的日志 | docker logs container_name |
+| docker inspect | 获取容器或镜像的详细信息 | docker inspect container_name |
+| docker exec -it | 进入容器的交互式终端（不会导致容器停止） | docker exec -it container_name /bin/bash |
+| docker network ls | 列出所有 Docker 网络 | docker network ls |
+| docker volume ls | 列出所有 Docker 卷 | docker volume ls |
+| docker-compose up | 启动多容器应用（从 docker-compose.yml 文件） | docker-compose up |
+| docker-compose down | 停止并删除由 docker-compose 启动的容器、网络等 | docker-compose down |
+| docker info | 显示 Docker 系统的详细信息 | docker info |
+| docker version | 显示 Docker 客户端和守护进程的版本信息 | docker version |
+| docker stats | 显示容器的实时资源使用情况 | docker stats |
+| docker login | 登录 Docker 仓库 | docker login |
+| docker logout | 登出 Docker 仓库 | docker logout |
+
+常用选项说明:
+
+`-d`：后台运行容器，例如 docker run -d ubuntu。
+`-it`：以交互式终端运行容器，例如 docker exec -it container_name bash。
+`-t`：为镜像指定标签，例如 docker build -t my-image .。
 
 ### 构建镜像
 
@@ -139,7 +184,38 @@ EXPOSE 8000
 CMD ["http-server", "-p", "8000"]
 ```
 
+**注意**：Dockerfile 的指令每执行一次都会在 docker 上新建一层。所以过多无意义的层，会造成镜像膨胀过大
+上面新增了3层镜像：ADD、COPY、RUN
+
+- `FROM`：定制的镜像都是基于 FROM 的镜像，这里的 nginx 就是定制需要的基础镜像。后续的操作都是基于 nginx。
+- `RUN`：用于执行后面跟着的命令行命令，两种格式：`RUN ["./test.php", "dev", "offline"]` 等价于 `RUN ./test.php dev offline`
+
+| Dockerfile 指令 | 说明 | 指令示例 |
+| --- | --- | --- |
+| FROM | 指定基础镜像，用于后续的指令构建。 | `FROM node:20-alpine` |
+| MAINTAINER | 指定Dockerfile的作者/维护者。（已弃用，推荐使用LABEL指令） | `MAINTAINER name@example.com` |
+| LABEL | 添加镜像的元数据，使用键值对的形式。 | `LABEL version="1.0" maintainer="me"` |
+| RUN | 在构建过程中在镜像中执行命令。 | `RUN npm ci` |
+| CMD | 指定容器创建时的默认命令。（可以被覆盖） | `CMD ["node", "app.js"]` |
+| ENTRYPOINT | 设置容器创建时的主要命令。（不可被覆盖） | `ENTRYPOINT ["./entrypoint.sh"]` |
+| EXPOSE | 声明容器运行时监听的特定网络端口。 | `EXPOSE 8080` |
+| ENV | 在容器内部设置环境变量。 | `ENV NODE_ENV=production` |
+| ADD | 将文件、目录或远程URL复制到镜像中。 | `ADD https://example.com/file.tar.gz /tmp/` |
+| COPY | 将文件或目录复制到镜像中。 | `COPY package.json ./` |
+| VOLUME | 为容器创建挂载点或声明卷。 | `VOLUME ["/data"]` |
+| WORKDIR | 设置后续指令的工作目录。 | `WORKDIR /app` |
+| USER | 指定后续指令的用户上下文。 | `USER node` |
+| ARG | 定义在构建过程中传递给构建器的变量，可使用 "docker build" 命令设置。 | `ARG VERSION=latest` |
+| ONBUILD | 当该镜像被用作另一个构建过程的基础时，添加触发器。 | `ONBUILD COPY . /app/src` |
+| STOPSIGNAL | 设置发送给容器以退出的系统调用信号。 | `STOPSIGNAL SIGTERM` |
+| HEALTHCHECK | 定义周期性检查容器健康状态的命令。 | `HEALTHCHECK --interval=30s CMD wget -qO- http://127.0.0.1/health` |
+| SHELL | 覆盖Docker中默认的shell，用于RUN、CMD和ENTRYPOINT指令。 | `SHELL ["/bin/bash", "-c"]` |
+
 ### docker compose
+
+> docker 桌面版（win/mac）不需要单独安装 docker compose
+
+[docker compose 下载](https://github.com/docker/compose/releases)
 
 示例：
 
@@ -178,6 +254,73 @@ services:
 - 通过端口访问， nest 的容器里通过宿主机 ip 访问这两个服务的
 - 通过 docker network create 创建一个桥接网络，然后 docker run 的时候指定 --network，这样 3 个容器就可以通过容器名互相访问了。
 
+```bash
+# 启动 compose
+docker-compose up [-d]
+```
+
+**yml配置指令参考**
+
+```yml
+# compose版本
+version: "3.7"
+services:
+  # 服务名
+  webapp:
+  # 构建镜像
+    build:
+    # 相对上下文，dockfile 位置
+      context: ./dir
+      # 指定名称
+      dockerfile: Dockerfile-alternate
+      # 添加构建参数，只能构建过程中访问的变量
+      args:
+        buildno: 1
+      # 构建镜像的标签
+      labels:
+        - "com.example.description=Accounting webapp"
+        - "com.example.department=Finance"
+        - "com.example.label-with-empty-value"
+      # 多层构建，可以指定构建哪一层
+      target: prod
+  # 为容器指定父 cgroup 组，意味着将继承该组的资源限制
+    cgroup_parent: m-executor-abcd
+  # 覆盖容器启动的默认命令
+    command: ["bundle", "exec", "thin", "-p", "3000"]
+  # 自定义容器名
+    container_name: my-web-container
+  # 依赖关系，顺序启动服务，先启动子依赖
+    depends_on:
+      - db
+      - redis
+    # 访问集群服务的方式，vip(虚拟IP), dnsrr(dns轮询)
+    endpoint_mode: vip 
+    # 从文件添加环境变量
+    env_file:
+      - ./common.env
+      - ./apps/web.env
+      - /opt/secrets.env
+    # 添加环境变量
+    environment:
+      RACK_ENV: development
+      SHOW: 'true'
+    # 重启策略
+    # restart: "no"
+    # restart: always
+    # restart: on-failure
+    restart: unless-stopped
+  # 服务
+  redis:
+  # 镜像
+    image: redis
+  db:
+    image: postgres
+    # 将主机的数据卷或者文件挂载到容器里
+    volumes:
+      - "/localhost/postgres.sock:/var/run/postgres/postgres.sock"
+      - "/localhost/data:/var/lib/postgresql/data"
+```
+
 ### 重启
 
 Docker 是支持自动重启的，可以在 docker run 的时候通过 --restart 指定重启策略，或者 Docker Compose 配置文件里配置 restart。
@@ -194,3 +337,16 @@ Docker 是支持自动重启的，可以在 docker run 的时候通过 --restart
 其实我们用 PM2 也是主要用它进程崩溃的时候重启的功能，而在有了 Docker 之后，用它的必要性就不大了。
 
 当然，进程重启的速度肯定是比容器重启的速度快一些的，如果只是 Docker 部署，可以结合 pm2-runtime 来做进程的重启。
+
+## hubs
+
+常用的公共镜像
+
+- Ubuntu：基于 Debian 的 Linux 操作系统。
+- CentOS： Linux 发行版之一，它是来自于 Red Hat Enterprise Linux(RHEL) 依照开放源代码规定发布的源代码所编译而成
+- Nginx: 一个高性能的 HTTP 和反向代理 web 服务器，同时也提供了 IMAP/POP3/SMTP 服务 
+- Node.js: 基于 Chrome V8 引擎的 JavaScript 运行环境，是一个让 JavaScript 运行在服务端的开发平台
+- MySQL: 最受欢迎的开源数据库。凭借其可靠性、易用性和性能，MySQL 已成为 Web 应用程序的数据库优先选择
+- Python: python 版本镜像
+- Redis： 是一个开源的使用 ANSI C 语言编写、支持网络、可基于内存亦可持久化的日志型、Key-Value 的 NoSQL 数据库，并提供多种语言的 API。
+- MongoDB：是一个免费的开源跨平台面向文档的 NoSQL 数据库程序
