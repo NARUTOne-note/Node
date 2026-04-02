@@ -4,6 +4,7 @@ import redis
 from flask import Flask
 
 app = Flask(__name__)
+# 连接 redis 服务，redis 服务名称为 redis，端口为 6379
 cache = redis.Redis(host='redis', port=6379)
 
 
