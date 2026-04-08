@@ -37,6 +37,13 @@ use [database_name];
 show tables;
 ```
 
+连接：
+
+```bash
+# mysql 数据库，驱动 pymysql(python)，用户名/密码 todo/todo，地址，端口，数据库
+mysql+pymysql://todo:todo@127.0.0.1:3307/todo
+```
+
 ### mysql 性能优化
 
 使用基本原则

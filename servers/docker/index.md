@@ -254,6 +254,14 @@ services:
 - 通过端口访问， nest 的容器里通过宿主机 ip 访问这两个服务的
 - 通过 docker network create 创建一个桥接网络，然后 docker run 的时候指定 --network，这样 3 个容器就可以通过容器名互相访问了。
 
+volumes 常用容器路径
+
+- `/var/lib/mysql`：数据持久化
+- `/etc/mysql/conf.d`：自定义配置
+- `/var/log/mysql`：日志文件
+- `/data`: redis 数据持久化
+- `/usr/local/etc/redis/redis.conf`: redis 自定义配置
+
 ```bash
 # 启动 compose
 docker-compose up [-d]
