@@ -107,11 +107,27 @@ docker build -t my-app .
 # 使用 ubuntu 镜像启动一个容器，参数为以命令行模式进入该容器（加上 -d 则不会进入容器）
 docker run -it ubuntu /bin/bash
 
+
 # 进入容器内部
 docker exec -it <容器ID/name> /bin/bash
 
 # 推出容器
 exit
+
+```
+
+mysql 为例：
+
+```bash
+# 启动 mysql 容器
+docker run --name some-mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw -p 3306:3306 -d mysql:latest
+
+# 进入mysql
+
+# 本地安装了mysql
+mysql -h 127.0.0.1 -P 3306 -u root -p
+# 本地没安装，使用docker 进入容器
+docker exec -it some-mysql mysql -u root -p
 
 ```
 
