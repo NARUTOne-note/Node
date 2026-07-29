@@ -227,6 +227,55 @@ CMD ["http-server", "-p", "8000"]
 | HEALTHCHECK | 定义周期性检查容器健康状态的命令。 | `HEALTHCHECK --interval=30s CMD wget -qO- http://127.0.0.1/health` |
 | SHELL | 覆盖Docker中默认的shell，用于RUN、CMD和ENTRYPOINT指令。 | `SHELL ["/bin/bash", "-c"]` |
 
+```
+"MYSQL_ROOT_PASSWORD=root",
+"MYSQL_USER=todo",
+"MYSQL_PASSWORD=todo",
+"MYSQL_DATABASE=todo",
+```
+
+### volume
+
+Docker 容器本身是无状态的，容器一旦被删除，内部的所有数据都会丢失，Volume（数据卷）就是为了解决这个问题而设计的持久化存储机制。
+
+volumes 常用容器内路径
+
+- `/var/lib/mysql`：数据持久化
+- `/etc/mysql/conf.d`：自定义配置
+- `/var/log/mysql`：日志文件
+- `/data`: redis 数据持久化
+- `/usr/local/etc/redis/redis.conf`: redis 自定义配置
+
+**配置卷**
+
+```bash
+# 1. 创建 Volume
+docker volume create mysql_data
+
+# 2. 启动 MySQL 容器并挂载 Volume
+docker run -d \
+  --name mysql \
+  -e MYSQL_ROOT_PASSWORD=mysecret \
+  -v mysql_data:/var/lib/mysql \
+  mysql:8.0
+
+# 3. 即使删除容器，数据依然保存在 Volume 中
+docker rm -f mysql
+
+# 4. 重新创建容器并挂载同一个 Volume，数据自动恢复
+docker run -d \
+  --name mysql_new \
+  -e MYSQL_ROOT_PASSWORD=mysecret \
+  -v mysql_data:/var/lib/mysql \
+  mysql:8.0
+```
+
+- 冒号左边
+  - 命名卷：mysql_data（数据卷名称）
+  - 绑定挂载卷：./data (以 ./ 或 / 开头的本地相对/绝对路径，适合开发环境)
+- 冒号右边：/var/lib/mysql（容器内路径）
+- 冒号表示“映射关系”，即把左边的数据源，映射（替换）到右边的容器目录上。
+
 ### docker compose
 
 > docker 桌面版（win/mac）不需要单独安装 docker compose
@@ -269,14 +318,6 @@ services:
 
 - 通过端口访问， nest 的容器里通过宿主机 ip 访问这两个服务的
 - 通过 docker network create 创建一个桥接网络，然后 docker run 的时候指定 --network，这样 3 个容器就可以通过容器名互相访问了。
-
-volumes 常用容器路径
-
-- `/var/lib/mysql`：数据持久化
-- `/etc/mysql/conf.d`：自定义配置
-- `/var/log/mysql`：日志文件
-- `/data`: redis 数据持久化
-- `/usr/local/etc/redis/redis.conf`: redis 自定义配置
 
 ```bash
 # 启动 compose
@@ -339,7 +380,7 @@ services:
     image: redis
   db:
     image: postgres
-    # 将主机的数据卷或者文件挂载到容器里
+    # 将主机的数据卷或者文件挂载到对应docker容器里路径下
     volumes:
       - "/localhost/postgres.sock:/var/run/postgres/postgres.sock"
       - "/localhost/data:/var/lib/postgresql/data"
