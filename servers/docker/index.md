@@ -92,21 +92,20 @@ window 使用 powershell 执行
 基本命令
 
 ```bash
-# 拉取镜像（如官方Nginx镜像）
+# 拉取镜像（如官方Nginx镜像），如果不指定标签（如 nginx:1.21），默认拉取 latest（最新稳定版）标签。
 docker pull nginx
 
-# 运行容器（-d 后台运行，-p 映射端口）
+# 运行容器（-d 后台运行，-p 映射端口），基于镜像 nginx，没写 --name，Docker 会自动为你随机分配一个名字
 docker run -d -p 80:80 nginx
 
 # 查看运行中的容器
 docker ps
 
-# 构建镜像（基于当前目录的Dockerfile）
+# 构建一个镜像my-app（. 代表基于当前目录的Dockerfile）
 docker build -t my-app .
 
-# 使用 ubuntu 镜像启动一个容器，参数为以命令行模式进入该容器（加上 -d 则不会进入容器）
+# 使用 ubuntu 镜像启动一个容器，参数为以命令行终端模式进入该容器（加上 -d 则不会进入容器）
 docker run -it ubuntu /bin/bash
-
 
 # 进入容器内部
 docker exec -it <容器ID/name> /bin/bash
@@ -320,9 +319,26 @@ services:
 - 通过 docker network create 创建一个桥接网络，然后 docker run 的时候指定 --network，这样 3 个容器就可以通过容器名互相访问了。
 
 ```bash
-# 启动 compose
+# 启动 ，根据build 执行对应dockerfile，创建镜像、容器，启动服务，设置网络和卷
 docker-compose up [-d]
+
+# 仅仅构建镜像，不启动容
+docker-compose build 
 ```
+
+**核心工作流程与对应底层操作**:
+
+一个 `docker compose up` 命令，背后大致会触发以下这些底层操作：
+
+| 阶段  | Compose 的决策与操作 | 对应的底层 Docker 命令 (示意) |
+| --- | --- | --- |
+| **1. 项目与网络准备** | 为当前项目创建一个**独立的默认网络**（如 `项目名_default`），用于容器间的通信[\\-23](https://www.cnblogs.com/leehang/articles/20164497)。 | `docker network create 项目名_default` |
+| **2. 镜像准备** | **拉取镜像**：对于配置了 `image` 的服务，若本地无镜像，则执行拉取\\-。 | `docker pull nginx:latest` |
+|     | **构建镜像**：对于配置了 `build` 的服务，根据 `Dockerfile` **构建镜像**\\-。 | `docker build -t 项目名_服务名 .` |
+| **3. 数据卷准备** | 创建 Compose 文件中定义的所有**数据卷（Volumes）**。 | `docker volume create 项目名_卷名` |
+| **4. 创建并启动容器** | 对于每个服务，根据其配置（镜像、端口、环境变量、卷等）**创建容器**\\-。 | `docker create --name 项目名_服务名_序号 ...` |
+|     | **启动容器**，并根据 `depends_on` 等配置**按依赖顺序启动**\\-[\\-22](https://developer.aliyun.com/article/1356141)。 | `docker start 项目名_服务名_序号` |
+| **5. 日志聚合与前台运行** | **附加**到所有容器的日志流，并将它们聚合输出到终端\\-。 | `docker logs -f 容器名` (对每个容器) |
 
 **yml配置指令参考**
 
