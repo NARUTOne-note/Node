@@ -1,7 +1,5 @@
 # RabbitMQ
 
-![1](./1.png)
-
 Producer 和 Consumer 分别是生产者和消费者。
 Connection 是连接，但我们不会每用一次 rabbitmq 就创建一个单独的 Connection，而是在一个 Connection 里做一下划分，叫做 Channel，每个 Channel 做自己的事情。
 而 Queue 就是两端存取消息的地方了。
