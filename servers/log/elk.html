@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ELK Stack 介绍 · 日志分析三件套</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" integrity="sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/" crossorigin="anonymous"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: #020617;
+      min-height: 100vh;
+      padding: 2rem;
+      color: white;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .header { margin-bottom: 2rem; }
+    .header-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+    .pulse-dot { width: 12px; height: 12px; background: #22d3ee; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; }
+    .subtitle { color: #94a3b8; font-size: 0.875rem; margin-left: 1.75rem; max-width: 90ch; }
+    .lead { color: #cbd5e1; font-size: 0.9rem; margin: 1rem 0 0 1.75rem; line-height: 1.6; }
+    .diagram-container {
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 1rem;
+      border: 1px solid #1e293b;
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+    svg { width: 100%; min-width: 900px; display: block; }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .card {
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 0.75rem;
+      border: 1px solid #1e293b;
+      padding: 1.25rem;
+    }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .card-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .card-dot.cyan { background: #22d3ee; }
+    .card-dot.emerald { background: #34d399; }
+    .card-dot.violet { background: #a78bfa; }
+    .card-dot.amber { background: #fbbf24; }
+    .card-dot.rose { background: #fb7185; }
+    .card h3 { font-size: 0.875rem; font-weight: 600; }
+    .card p { color: #cbd5e1; font-size: 0.78rem; line-height: 1.6; }
+    .card ul { list-style: none; color: #94a3b8; font-size: 0.75rem; }
+    .card li { margin-bottom: 0.375rem; line-height: 1.5; }
+    .card code { color: #22d3ee; font-size: 0.72rem; background: rgba(8,51,68,0.5); padding: 1px 4px; border-radius: 3px; }
+    .footer { text-align: center; margin-top: 1.5rem; color: #475569; font-size: 0.75rem; }
+    .toolbar { display: flex; gap: 0.5rem; margin-left: auto; flex-shrink: 0; align-items: center; }
+    .toolbar-toggle { background: transparent; border: none; color: #475569; cursor: pointer; font-size: 1.25rem; line-height: 1; padding: 0.25rem 0.5rem; border-radius: 0.375rem; transition: color 0.2s, background 0.2s; }
+    .toolbar-toggle:hover { color: #94a3b8; background: rgba(30, 41, 59, 0.5); }
+    .toolbar-actions { display: none; gap: 0.5rem; }
+    .toolbar.expanded .toolbar-actions { display: flex; }
+    .toolbar-actions button {
+      background: rgba(30, 41, 59, 0.8); border: 1px solid #334155; color: #94a3b8;
+      padding: 0.375rem 0.75rem; border-radius: 0.375rem; font-family: inherit;
+      font-size: 0.75rem; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .toolbar-actions button:hover { background: rgba(51, 65, 85, 0.8); color: white; border-color: #475569; }
+    @media print { body { background: #020617; padding: 1rem; } .toolbar { display: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="container" id="report-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-row">
+        <div class="pulse-dot"></div>
+        <h1>ELK Stack 介绍</h1>
+        <div class="toolbar">
+          <div class="toolbar-actions">
+            <button onclick="copyAsImage(this)">📋 复制</button>
+            <button onclick="downloadPNG(this)">🖼️ PNG</button>
+            <button onclick="downloadPDF(this)">📄 PDF</button>
+          </div>
+          <button class="toolbar-toggle" onclick="this.parentElement.classList.toggle('expanded')" title="导出选项" aria-label="导出选项">⋯</button>
+        </div>
+      </div>
+      <p class="subtitle">E = Elasticsearch · L = Logstash · K = Kibana —— 把散落各处的日志，变成能搜、能看、能告警的仪表盘。</p>
+      <p class="lead">一句话理解：ELK 像一座<b>图书馆</b>。<b>Logstash</b> 是分拣员（把乱糟糟的日志整理好），<b>Elasticsearch</b> 是带秒级搜索的图书库（存起来、随时查），<b>Kibana</b> 是阅览室的大屏（把数据画成图表给你看）。</p>
+    </div>
+
+    <!-- Main Diagram -->
+    <div class="diagram-container">
+      <svg viewBox="0 0 1000 600">
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+
+        <!-- Background Grid -->
+        <rect width="100%" height="100%" fill="url(#grid)" />
+
+        <!-- ====== ARROWS (drawn first so boxes overlay them) ====== -->
+        <!-- Sources -> Beats -> Logstash -->
+        <line x1="210" y1="260" x2="298" y2="260" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <!-- Logstash -> Elasticsearch -->
+        <line x1="450" y1="260" x2="548" y2="260" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="499" y="253" fill="#94a3b8" font-size="9" text-anchor="middle">清洗后</text>
+        <!-- Elasticsearch -> Kibana -->
+        <line x1="720" y1="260" x2="818" y2="260" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="769" y="253" fill="#94a3b8" font-size="9" text-anchor="middle">索引/查询</text>
+        <!-- Kibana -> User (vertical) -->
+        <line x1="895" y1="372" x2="895" y2="408" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="905" y="394" fill="#94a3b8" font-size="9">浏览</text>
+
+        <!-- ====== REGION BOUNDARY ====== -->
+        <rect x="60" y="80" width="880" height="430" rx="12" fill="rgba(251, 191, 36, 0.05)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="72" y="100" fill="#fbbf24" font-size="10" font-weight="600">ELK Stack · 日志分析全家桶</text>
+
+        <!-- ====== STAGE A: 数据源 Sources ====== -->
+        <rect x="80" y="150" width="130" height="220" rx="8" fill="#0f172a"/>
+        <rect x="80" y="150" width="130" height="220" rx="8" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="145" y="174" fill="white" font-size="12" font-weight="600" text-anchor="middle">数据源</text>
+        <text x="145" y="189" fill="#94a3b8" font-size="9" text-anchor="middle">Sources</text>
+        <text x="145" y="218" fill="#cbd5e1" font-size="9" text-anchor="middle">• 应用日志</text>
+        <text x="145" y="238" fill="#cbd5e1" font-size="9" text-anchor="middle">• Nginx 访问</text>
+        <text x="145" y="258" fill="#cbd5e1" font-size="9" text-anchor="middle">• 数据库慢查询</text>
+        <text x="145" y="278" fill="#cbd5e1" font-size="9" text-anchor="middle">• 系统 / 容器</text>
+        <text x="145" y="298" fill="#cbd5e1" font-size="9" text-anchor="middle">• 性能指标</text>
+        <text x="145" y="340" fill="#94a3b8" font-size="7" text-anchor="middle">散落在各服务器上</text>
+        <text x="145" y="352" fill="#94a3b8" font-size="7" text-anchor="middle">又多又乱、难直接查</text>
+
+        <!-- ====== Beats (lightweight shippers, on the arrow gap) ====== -->
+        <rect x="218" y="244" width="78" height="32" rx="4" fill="rgba(251, 146, 60, 0.3)" stroke="#fb923c" stroke-width="1"/>
+        <text x="257" y="258" fill="#fb923c" font-size="8" font-weight="600" text-anchor="middle">Beats</text>
+        <text x="257" y="270" fill="#fb923c" font-size="6" text-anchor="middle">轻量采集器</text>
+
+        <!-- ====== STAGE B: Logstash ====== -->
+        <rect x="300" y="150" width="150" height="220" rx="8" fill="#0f172a"/>
+        <rect x="300" y="150" width="150" height="220" rx="8" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="375" y="174" fill="white" font-size="12" font-weight="600" text-anchor="middle">Logstash</text>
+        <text x="375" y="189" fill="#34d399" font-size="9" text-anchor="middle">收集 · 清洗 · 转发</text>
+        <!-- pipeline: input -> filter -> output -->
+        <rect x="320" y="208" width="110" height="40" rx="4" fill="rgba(6,78,59,0.25)" stroke="#34d399" stroke-width="0.8"/>
+        <text x="375" y="224" fill="white" font-size="9" text-anchor="middle">Input 输入</text>
+        <text x="375" y="238" fill="#94a3b8" font-size="7" text-anchor="middle">接收各路日志</text>
+        <rect x="320" y="256" width="110" height="40" rx="4" fill="rgba(6,78,59,0.25)" stroke="#34d399" stroke-width="0.8"/>
+        <text x="375" y="272" fill="white" font-size="9" text-anchor="middle">Filter 过滤</text>
+        <text x="375" y="286" fill="#94a3b8" font-size="7" text-anchor="middle">解析 / 清洗 / 富化</text>
+        <rect x="320" y="304" width="110" height="40" rx="4" fill="rgba(6,78,59,0.25)" stroke="#34d399" stroke-width="0.8"/>
+        <text x="375" y="320" fill="white" font-size="9" text-anchor="middle">Output 输出</text>
+        <text x="375" y="334" fill="#94a3b8" font-size="7" text-anchor="middle">转发到 ES</text>
+        <text x="375" y="360" fill="#34d399" font-size="7" text-anchor="middle">像分拣员把书编目</text>
+
+        <!-- ====== STAGE C: Elasticsearch ====== -->
+        <rect x="550" y="150" width="170" height="220" rx="8" fill="#0f172a"/>
+        <rect x="550" y="150" width="170" height="220" rx="8" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="635" y="174" fill="white" font-size="12" font-weight="600" text-anchor="middle">Elasticsearch</text>
+        <text x="635" y="189" fill="#a78bfa" font-size="9" text-anchor="middle">存储 · 全文搜索</text>
+        <!-- cluster ring -->
+        <rect x="566" y="206" width="138" height="130" rx="6" fill="transparent" stroke="#a78bfa" stroke-width="0.8" stroke-dasharray="4,4"/>
+        <text x="635" y="221" fill="#a78bfa" font-size="7" text-anchor="middle">集群 Cluster</text>
+        <!-- nodes -->
+        <rect x="582" y="232" width="106" height="28" rx="4" fill="rgba(76,29,149,0.25)" stroke="#a78bfa" stroke-width="1"/>
+        <text x="635" y="250" fill="white" font-size="9" text-anchor="middle">Node 1 · 主</text>
+        <rect x="582" y="266" width="106" height="28" rx="4" fill="rgba(76,29,149,0.25)" stroke="#a78bfa" stroke-width="1"/>
+        <text x="635" y="284" fill="white" font-size="9" text-anchor="middle">Node 2</text>
+        <rect x="582" y="300" width="106" height="28" rx="4" fill="rgba(76,29,149,0.25)" stroke="#a78bfa" stroke-width="1"/>
+        <text x="635" y="318" fill="white" font-size="9" text-anchor="middle">Node 3</text>
+        <text x="635" y="352" fill="#a78bfa" font-size="7" text-anchor="middle">分片 + 副本，秒级搜索</text>
+        <text x="635" y="363" fill="#94a3b8" font-size="7" text-anchor="middle">像带搜索的图书库</text>
+
+        <!-- ====== STAGE D: Kibana ====== -->
+        <rect x="820" y="150" width="150" height="220" rx="8" fill="#0f172a"/>
+        <rect x="820" y="150" width="150" height="220" rx="8" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="895" y="174" fill="white" font-size="12" font-weight="600" text-anchor="middle">Kibana</text>
+        <text x="895" y="189" fill="#22d3ee" font-size="9" text-anchor="middle">可视化 · 仪表盘</text>
+        <!-- mini bar chart -->
+        <line x1="842" y1="265" x2="948" y2="265" stroke="#22d3ee" stroke-width="0.6" opacity="0.5"/>
+        <rect x="850" y="235" width="16" height="30" fill="#22d3ee" opacity="0.7"/>
+        <rect x="872" y="245" width="16" height="20" fill="#22d3ee" opacity="0.7"/>
+        <rect x="894" y="222" width="16" height="43" fill="#22d3ee" opacity="0.7"/>
+        <rect x="916" y="250" width="16" height="15" fill="#22d3ee" opacity="0.7"/>
+        <!-- dashboard rows -->
+        <rect x="842" y="278" width="106" height="24" rx="3" fill="rgba(8,51,68,0.25)" stroke="#22d3ee" stroke-width="0.6"/>
+        <text x="895" y="294" fill="white" font-size="8" text-anchor="middle">Dashboard 仪表盘</text>
+        <rect x="842" y="308" width="106" height="24" rx="3" fill="rgba(8,51,68,0.25)" stroke="#22d3ee" stroke-width="0.6"/>
+        <text x="895" y="324" fill="white" font-size="8" text-anchor="middle">Discover 日志搜索</text>
+        <rect x="842" y="338" width="106" height="24" rx="3" fill="rgba(8,51,68,0.25)" stroke="#22d3ee" stroke-width="0.6"/>
+        <text x="895" y="354" fill="white" font-size="8" text-anchor="middle">Alerts 告警</text>
+
+        <!-- ====== USER (outside region top? inside below Kibana) ====== -->
+        <rect x="835" y="410" width="120" height="48" rx="6" fill="rgba(136, 19, 55, 0.4)" stroke="#fb7185" stroke-width="1.5"/>
+        <text x="895" y="432" fill="white" font-size="11" font-weight="600" text-anchor="middle">用户 / 运维</text>
+        <text x="895" y="447" fill="#94a3b8" font-size="9" text-anchor="middle">浏览器查看</text>
+
+        <!-- ====== LEGEND (below region) ====== -->
+        <text x="60" y="540" fill="white" font-size="10" font-weight="600">图例</text>
+
+        <rect x="60" y="552" width="16" height="10" rx="2" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1"/>
+        <text x="82" y="561" fill="#94a3b8" font-size="8">数据源</text>
+
+        <rect x="150" y="552" width="16" height="10" rx="2" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1"/>
+        <text x="172" y="561" fill="#94a3b8" font-size="8">Logstash 处理</text>
+
+        <rect x="270" y="552" width="16" height="10" rx="2" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1"/>
+        <text x="292" y="561" fill="#94a3b8" font-size="8">Elasticsearch 存储</text>
+
+        <rect x="410" y="552" width="16" height="10" rx="2" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1"/>
+        <text x="432" y="561" fill="#94a3b8" font-size="8">Kibana 可视化</text>
+
+        <rect x="540" y="552" width="16" height="10" rx="2" fill="rgba(251, 146, 60, 0.3)" stroke="#fb923c" stroke-width="1"/>
+        <text x="562" y="561" fill="#94a3b8" font-size="8">Beats 轻量采集</text>
+
+        <rect x="670" y="552" width="16" height="10" rx="2" fill="rgba(136, 19, 55, 0.4)" stroke="#fb7185" stroke-width="1"/>
+        <text x="692" y="561" fill="#94a3b8" font-size="8">用户 / 运维</text>
+      </svg>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="cards">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot rose"></div>
+          <h3>是什么 · What</h3>
+        </div>
+        <ul>
+          <li>• <code>E</code>lasticsearch：搜索引擎，负责存和查</li>
+          <li>• <code>L</code>ogstash：数据处理管道，负责收和洗</li>
+          <li>• <code>K</code>ibana：可视化界面，负责看和告警</li>
+          <li>• 加上 <code>Beats</code> 轻量采集器，合称 Elastic Stack</li>
+          <li>• 全部开源，由 Elastic 公司维护</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot emerald"></div>
+          <h3>怎么工作 · How</h3>
+        </div>
+        <ul>
+          <li>① <b>采集</b>：Beats 装在各服务器上抓日志</li>
+          <li>② <b>清洗</b>：Logstash 解析、过滤、补字段</li>
+          <li>③ <b>存储</b>：Elasticsearch 建索引、分布式存</li>
+          <li>④ <b>可视化</b>：Kibana 画图、搜索、配告警</li>
+          <li>• 数据单向流动：左 → 右，四步流水线</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot violet"></div>
+          <h3>为什么用 · Why</h3>
+        </div>
+        <ul>
+          <li>• 日志分散在几十上百台机器，grep 查不动</li>
+          <li>• ES 秒级全文搜索 + 聚合统计</li>
+          <li>• Kibana 拖拽出图表，不用写代码</li>
+          <li>• 典型场景：线上排障、安全审计、业务监控</li>
+          <li>• 替代方案：Loki、Splunk、OpenSearch</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <p class="footer">
+      ELK Stack · Elasticsearch + Logstash + Kibana + Beats · 日志分析入门图解
+    </p>
+  </div>
+
+  <script>
+    async function copyAsImage(btn) {
+      const orig = btn.textContent;
+      try {
+        const el = document.getElementById('report-container');
+        const r = el.getBoundingClientRect();
+        const pad = 32;
+        const canvas = await html2canvas(document.body, { backgroundColor: '#020617', scale: 2, useCORS: true, ignoreElements: (e) => e.classList && e.classList.contains('toolbar'), x: r.left + window.scrollX - pad, y: r.top + window.scrollY - pad, width: r.width + pad * 2, height: r.height + pad * 2 });
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        btn.textContent = '✓ 已复制!';
+      } catch (e) {
+        btn.textContent = '✗ 失败';
+      }
+      setTimeout(() => btn.textContent = orig, 2000);
+    }
+
+    async function downloadPNG(btn) {
+      const orig = btn.textContent;
+      btn.textContent = '⏳ ...';
+      try {
+        const el = document.getElementById('report-container');
+        const r = el.getBoundingClientRect();
+        const pad = 32;
+        const canvas = await html2canvas(document.body, { backgroundColor: '#020617', scale: 2, useCORS: true, ignoreElements: (e) => e.classList && e.classList.contains('toolbar'), x: r.left + window.scrollX - pad, y: r.top + window.scrollY - pad, width: r.width + pad * 2, height: r.height + pad * 2 });
+        const link = document.createElement('a');
+        link.download = 'elk-stack.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        btn.textContent = '✓ 完成!';
+      } catch (e) {
+        btn.textContent = '✗ 失败';
+      }
+      setTimeout(() => btn.textContent = orig, 2000);
+    }
+
+    async function downloadPDF(btn) {
+      const orig = btn.textContent;
+      btn.textContent = '⏳ ...';
+      try {
+        const el = document.getElementById('report-container');
+        const r = el.getBoundingClientRect();
+        const pad = 32;
+        const canvas = await html2canvas(document.body, { backgroundColor: '#020617', scale: 2, useCORS: true, ignoreElements: (e) => e.classList && e.classList.contains('toolbar'), x: r.left + window.scrollX - pad, y: r.top + window.scrollY - pad, width: r.width + pad * 2, height: r.height + pad * 2 });
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const orientation = canvas.width > canvas.height ? 'landscape' : 'portrait';
+        const pdf = new jsPDF({ orientation, unit: 'px', format: [canvas.width, canvas.height], hotfixes: ['px_scaling'] });
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save('elk-stack.pdf');
+        btn.textContent = '✓ 完成!';
+      } catch (e) {
+        btn.textContent = '✗ 失败';
+      }
+      setTimeout(() => btn.textContent = orig, 2000);
+    }
+  </script>
+</body>
+</html>
