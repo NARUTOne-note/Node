@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>gRPC · 极简讲解</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      line-height: 1.6;
+      padding: 2rem;
+    }
+    .container { max-width: 880px; margin: 0 auto; }
+    header { margin-bottom: 2rem; }
+    h1 { font-size: 2.2rem; font-weight: 700; letter-spacing: -0.02em; }
+    .subtitle { color: #64748b; margin-top: 0.5rem; font-size: 1.15rem; }
+    .tag { display: inline-block; background:#0284c7; color:#fff; font-size:0.75rem; padding:0.15rem 0.6rem; border-radius:999px; margin-bottom:0.6rem; }
+    .section {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 1rem;
+      padding: 1.6rem;
+      margin-bottom: 1.5rem;
+    }
+    .section h2 { font-size: 1.3rem; margin-bottom: 0.4rem; }
+    .section .lead { color:#64748b; margin-bottom: 1.2rem; font-size: 0.98rem; }
+    svg { width: 100%; height: auto; display: block; }
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .step-card {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.75rem;
+      padding: 1rem;
+    }
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 50%;
+      background: #0284c7;
+      color: #fff;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .step-card h3 { font-size: 1rem; margin-bottom: 0.25rem; }
+    .step-card p { color: #475569; font-size: 0.9rem; }
+    .analogy {
+      background: #fce7f3;
+      border: 1px solid #f9a8d4;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      font-size: 1rem;
+    }
+    .analogy b { color: #db2777; }
+    .takeaway {
+      background: #ecfeff;
+      border: 1px solid #67e8f9;
+      border-radius: 0.75rem;
+      padding: 1rem;
+    }
+    .takeaway b { color:#0369a1; }
+    .compare { width:100%; border-collapse:collapse; margin-top:0.5rem; }
+    .compare th, .compare td { border:1px solid #e2e8f0; padding:0.6rem 0.8rem; text-align:left; font-size:0.9rem; }
+    .compare th { background:#f1f5f9; }
+    .compare td:first-child { font-weight:600; color:#0284c7; }
+    footer { text-align: center; color: #94a3b8; font-size: 0.8rem; margin-top: 1.5rem; }
+    .legend { display:flex; gap:1rem; flex-wrap:wrap; font-size:0.78rem; color:#64748b; margin-top:0.6rem; }
+    .legend span { display:inline-flex; align-items:center; gap:0.3rem; }
+    .dot { width:0.7rem; height:0.7rem; border-radius:3px; display:inline-block; border:1.5px solid; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <span class="tag">极简讲解</span>
+      <h1>gRPC</h1>
+      <p class="subtitle">一句话：让两台机器像「直接调用本地函数」一样互相说话的快车道。</p>
+    </header>
+
+    <!-- 1. 先懂 RPC -->
+    <div class="section">
+      <h2>① 先懂什么叫 RPC</h2>
+      <p class="lead">RPC = Remote Procedure Call（远程过程调用）。你调一个函数，但函数在另一台机器上跑。</p>
+      <svg viewBox="0 0 800 220">
+        <defs>
+          <marker id="arrow1" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#0284c7"/>
+          </marker>
+        </defs>
+        <!-- 你的程序 -->
+        <rect x="30" y="70" width="200" height="90" rx="12" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+        <text x="130" y="105" fill="#0f172a" font-size="16" font-weight="600" text-anchor="middle">你的程序</text>
+        <text x="130" y="130" fill="#475569" font-size="13" text-anchor="middle">调用 getUser(1)</text>
+        <text x="130" y="150" fill="#475569" font-size="13" text-anchor="middle">就像本地函数一样</text>
+
+        <!-- 网络 -->
+        <line x1="232" y1="115" x2="348" y2="115" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow1)"/>
+        <text x="290" y="105" fill="#0284c7" font-size="12" text-anchor="middle">网络请求</text>
+
+        <!-- 远程机器 -->
+        <rect x="350" y="70" width="200" height="90" rx="12" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+        <text x="450" y="105" fill="#0f172a" font-size="16" font-weight="600" text-anchor="middle">远程服务器</text>
+        <text x="450" y="130" fill="#475569" font-size="13" text-anchor="middle">真正执行 getUser(1)</text>
+        <text x="450" y="150" fill="#475569" font-size="13" text-anchor="middle">把结果发回来</text>
+
+        <!-- 返回箭头 -->
+        <line x1="348" y1="150" x2="232" y2="150" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow1)" transform="translate(0,0)"/>
+      </svg>
+      <div class="legend">
+        <span><i class="dot" style="background:#e0f2fe;border-color:#0284c7;"></i>调用方</span>
+        <span><i class="dot" style="background:#fef3c7;border-color:#d97706;"></i>被调用方</span>
+        <span><i class="dot" style="background:#dcfce7;border-color:#16a34a;"></i>返回结果</span>
+      </div>
+    </div>
+
+    <!-- 2. gRPC 是什么 -->
+    <div class="section">
+      <h2>② gRPC 是什么</h2>
+      <p class="lead">gRPC 是 Google 开源的 RPC 框架：帮你把「定义接口 → 打包数据 → 发送 → 解包 → 调用」全自动化。</p>
+      <svg viewBox="0 0 800 240">
+        <defs>
+          <marker id="arrow2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"/>
+          </marker>
+        </defs>
+        <!-- 三个关键件 -->
+        <rect x="40" y="40" width="200" height="80" rx="12" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+        <text x="140" y="80" fill="#0f172a" font-size="15" font-weight="600" text-anchor="middle">.proto 接口定义</text>
+        <text x="140" y="102" fill="#475569" font-size="12" text-anchor="middle">说清楚有哪些函数、参数</text>
+
+        <rect x="300" y="40" width="200" height="80" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+        <text x="400" y="80" fill="#0f172a" font-size="15" font-weight="600" text-anchor="middle">自动生成代码</text>
+        <text x="400" y="102" fill="#475569" font-size="12" text-anchor="middle">客户端 + 服务端两边都生成</text>
+
+        <rect x="560" y="40" width="200" height="80" rx="12" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+        <text x="660" y="80" fill="#0f172a" font-size="15" font-weight="600" text-anchor="middle">HTTP/2 传输</text>
+        <text x="660" y="102" fill="#475569" font-size="12" text-anchor="middle">用 protobuf 二进制打包</text>
+
+        <line x1="240" y1="80" x2="298" y2="80" stroke="#64748b" stroke-width="2" marker-end="url(#arrow2)"/>
+        <line x1="500" y1="80" x2="558" y2="80" stroke="#64748b" stroke-width="2" marker-end="url(#arrow2)"/>
+
+        <!-- 底部小结框 -->
+        <rect x="120" y="150" width="560" height="60" rx="12" fill="#fce7f3" stroke="#db2777" stroke-width="1.5" stroke-dasharray="6,4"/>
+        <text x="400" y="185" fill="#0f172a" font-size="14" font-weight="600" text-anchor="middle">写一份 .proto → 两边代码自动来 → 跨语言也能对上</text>
+      </svg>
+    </div>
+
+    <!-- 3. 怎么工作 -->
+    <div class="section">
+      <h2>③ 怎么工作（一次调用）</h2>
+      <p class="lead">从写 proto 到拿到结果，分四步走完。</p>
+      <div class="steps">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <h3>定义接口</h3>
+          <p>写一个 <b>.proto</b> 文件，声明有哪些方法、参数和返回值。</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <h3>生成桩代码</h3>
+          <p>用工具一键生成客户端 Stub 和服务端 Stub（各语言版本）。</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <h3>发起调用</h3>
+          <p>客户端像调本地函数一样调，数据被 protobuf 压成二进制走 HTTP/2。</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">4</div>
+          <h3>服务端返回</h3>
+          <p>服务端执行真正逻辑，把结果原路压回，客户端自动解包拿到对象。</p>
+        </div>
+      </div>
+      <svg viewBox="0 0 800 200" style="margin-top:1.2rem;">
+        <defs>
+          <marker id="arrow3" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#0284c7"/>
+          </marker>
+          <marker id="arrow3b" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a"/>
+          </marker>
+        </defs>
+        <rect x="30" y="60" width="160" height="80" rx="12" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+        <text x="110" y="95" fill="#0f172a" font-size="14" font-weight="600" text-anchor="middle">客户端</text>
+        <text x="110" y="118" fill="#475569" font-size="12" text-anchor="middle">userClient.getUser(1)</text>
+
+        <rect x="320" y="60" width="160" height="80" rx="12" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+        <text x="400" y="95" fill="#0f172a" font-size="14" font-weight="600" text-anchor="middle">HTTP/2 + protobuf</text>
+        <text x="400" y="118" fill="#475569" font-size="12" text-anchor="middle">二进制，又小又快</text>
+
+        <rect x="610" y="60" width="160" height="80" rx="12" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+        <text x="690" y="95" fill="#0f172a" font-size="14" font-weight="600" text-anchor="middle">服务端</text>
+        <text x="690" y="118" fill="#475569" font-size="12" text-anchor="middle">真正查数据库返回</text>
+
+        <line x1="192" y1="85" x2="318" y2="85" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow3)"/>
+        <text x="255" y="78" fill="#0284c7" font-size="11" text-anchor="middle">压包发送</text>
+
+        <line x1="318" y1="115" x2="192" y2="115" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow3b)"/>
+        <text x="255" y="135" fill="#16a34a" font-size="11" text-anchor="middle">结果回传</text>
+
+        <line x1="480" y1="100" x2="608" y2="100" stroke="#64748b" stroke-width="2" marker-end="url(#arrow3)"/>
+      </svg>
+    </div>
+
+    <!-- 4. 两个关键件 -->
+    <div class="section">
+      <h2>④ 两个关键零件</h2>
+      <p class="lead">gRPC 又快又省，靠的是下面两样东西。</p>
+      <div class="steps">
+        <div class="step-card" style="background:#dcfce7;border-color:#86efac;">
+          <div class="step-num" style="background:#16a34a;">A</div>
+          <h3>Protobuf</h3>
+          <p>把数据压成<b>二进制</b>，比 JSON 小很多、解析快很多，还自带「字段叫什么」的合同。</p>
+        </div>
+        <div class="step-card" style="background:#fef3c7;border-color:#fcd34d;">
+          <div class="step-num" style="background:#d97706;">B</div>
+          <h3>HTTP/2</h3>
+          <p>一条连接上<b>并发多个请求</b>，双向流，省连接、低延迟。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. 四种调用模式 -->
+    <div class="section">
+      <h2>⑤ 不只是「一问一答」</h2>
+      <p class="lead">gRPC 支持 4 种调用模式，比普通 HTTP 灵活。</p>
+      <svg viewBox="0 0 800 240">
+        <!-- 一元 -->
+        <rect x="20" y="30" width="180" height="90" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+        <text x="110" y="60" fill="#0f172a" font-size="14" font-weight="600" text-anchor="middle">一元（普通）</text>
+        <text x="110" y="82" fill="#475569" font-size="11" text-anchor="middle">一问 → 一答</text>
+        <text x="110" y="100" fill="#94a3b8" font-size="11" text-anchor="middle">Unary</text>
+
+        <!-- 服务端流 -->
+        <rect x="210" y="30" width="180" height="90" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+        <text x="300" y="60" fill="#0f172a" font-size="14" font-weight="600" text-anchor="middle">服务端流</text>
+        <text x="300" y="82" fill="#475569" font-size="11" text-anchor="middle">一问 → 连续多条答</text>
+        <text x="300" y="100" fill="#94a3b8" font-size="11" text-anchor="middle">Server Stream</text>
+
+        <!-- 客户端流 -->
+        <rect x="400" y="30" width="180" height="90" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+        <text x="490" y="60" fill="#0f172a" font-size="14" font-weight="600" text-anchor="middle">客户端流</text>
+        <text x="490" y="82" fill="#475569" font-size="11" text-anchor="middle">连发多条 → 一答</text>
+        <text x="490" y="100" fill="#94a3b8" font-size="11" text-anchor="middle">Client Stream</text>
+
+        <!-- 双向流 -->
+        <rect x="590" y="30" width="190" height="90" rx="10" fill="#fce7f3" stroke="#db2777" stroke-width="1.5"/>
+        <text x="685" y="60" fill="#0f172a" font-size="14" font-weight="600" text-anchor="middle">双向流</text>
+        <text x="685" y="82" fill="#475569" font-size="11" text-anchor="middle">随时发 / 随时收</text>
+        <text x="685" y="100" fill="#94a3b8" font-size="11" text-anchor="middle">Bidirectional</text>
+
+        <!-- 适用场景 -->
+        <rect x="20" y="140" width="760" height="80" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5" stroke-dasharray="6,4"/>
+        <text x="400" y="168" fill="#0f172a" font-size="13" font-weight="600" text-anchor="middle">什么时候用哪种？</text>
+        <text x="400" y="192" fill="#475569" font-size="12" text-anchor="middle">普通查询→一元；推股票/日志→服务端流；批量上传→客户端流；聊天/实时→双向流</text>
+      </svg>
+    </div>
+
+    <!-- 6. 和 REST 对比 -->
+    <div class="section">
+      <h2>⑥ 和 REST 有啥不一样</h2>
+      <p class="lead">REST 更通用、人好读；gRPC 更快、更适合服务之间内部通话。</p>
+      <table class="compare">
+        <tr><th>对比点</th><th>REST + JSON</th><th>gRPC + Protobuf</th></tr>
+        <tr><td>数据格式</td><td>文本（JSON）</td><td>二进制（小且快）</td></tr>
+        <tr><td>传输协议</td><td>HTTP/1.1 为主</td><td>HTTP/2 多路复用</td></tr>
+        <tr><td>接口合同</td><td>靠文档约定</td><td>.proto 强类型自动生成</td></tr>
+        <tr><td>调用模式</td><td>基本一问一答</td><td>4 种流式</td></tr>
+        <tr><td>浏览器直连</td><td>天然支持</td><td>需 gRPC-Web 网关</td></tr>
+        <tr><td>最适合</td><td>对外 API / 前端</td><td>服务间内部通话</td></tr>
+      </table>
+    </div>
+
+    <!-- 类比 -->
+    <div class="section">
+      <h2>⑦ 打个比方</h2>
+      <p class="analogy">
+        gRPC 就像两家公司之间配了 <b>同款对讲机 + 统一话术本</b>：
+        话术本（.proto）规定好「问什么、答什么」，对讲机（HTTP/2）又快又能同时讲，
+        所以两边像 <b>坐在同一间办公室喊话</b> 一样自然——其实人还隔着几栋楼。
+      </p>
+    </div>
+
+    <!-- 小结 -->
+    <div class="section">
+      <h2>⑧ 记住一句话</h2>
+      <p class="takeaway">
+        <b>gRPC = 自动化的远程函数调用</b>：用 .proto 当合同，用 protobuf 压数据，用 HTTP/2 飞，
+        让跨语言、跨机器的调用又快又像本地函数。
+      </p>
+    </div>
+
+    <footer>gRPC · 极简讲解 · 浏览器直接打开即可查看</footer>
+  </div>
+</body>
+</html>
