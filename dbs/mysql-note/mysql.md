@@ -15,6 +15,14 @@
 4. **ER模型**，全称为**实体关系模型**（Entity-Relationship Model）
 5. 关系数据库产品：oracle、db2、sql server、mysql、postgresql
 
+**基础术语**
+
+-  **主键**：主键是唯一的。一个数据表中只能包含一个主键。你可以使用主键来查询数据。
+-  **外键**：外键用于关联两个表。
+-  **复合键**：复合键（组合键）将多个列作为一个索引键，一般用于复合索引。
+-  **索引**：使用索引可快速访问数据库表中的特定信息。索引是对数据库表中一列或多列的值进行排序的一种结构。类似于书籍的目录。
+-  **参照完整性**：参照的完整性要求关系中不允许引用不存在的实体。与实体完整性是关系模型必须满足的完整性约束条件，目的是保证数据的一致性。
+
 ## mysql
 
 [mysql 基础教程](https://www.runoob.com/mysql/mysql-administration.html)
@@ -27,14 +35,51 @@ net start mysql
 # 关闭
 net stop mysql
 
-# 连接, 本地
+# 连接, root账户
 mysql -u root -p
 
+# 创建新用户
+CREATE USER 'username'@'host' IDENTIFIED BY 'password';
+
+# 删除用户
+DROP USER 'username'@'host';
+
+# 修改密码
+ALTER USER 'john'@'localhost' IDENTIFIED BY 'newpassword456';
+
 # databases
+create DATABASE [XXX];
+drop DATABSE [XXX];
+
 show databases;
 use [database_name];
+
 # tables
 show tables;
+
+CREATE TABLE table_name (
+    column1 datatype,
+    column2 datatype,
+    ...
+);
+DROP Table [xxxx];
+
+# crud
+INSERT INTO table_name (column1, column2, column3, ...)
+VALUES (value1, value2, value3, ...);
+
+SELECT column1, column2, ...
+FROM table_name
+[WHERE condition]
+[ORDER BY column_name [ASC | DESC]]
+[LIMIT number];
+
+UPDATE table_name
+SET column1 = value1, column2 = value2, ...
+WHERE condition;
+
+DELETE FROM table_name
+WHERE condition;
 ```
 
 连接：
@@ -44,9 +89,15 @@ show tables;
 mysql+pymysql://todo:todo@127.0.0.1:3307/todo
 ```
 
+### 数据类型
+
+1、数值类型：INT、FLOAT、DOUBLE、DECIMAL、BIGINT
+2、日期时间类型：DATETIME、DATE、TIMESTAMP、TIME和YEAR
+3、字符串类型：CHAR、VARCHAR、BINARY、VARBINARY、BLOB、TEXT、ENUM和SET
+
 ### mysql 性能优化
 
-使用基本原则
+**使用基本原则**
 
 1、只存储，不计算
 2、尽量单表查询，不跨表和多表关联
@@ -56,7 +107,7 @@ mysql+pymysql://todo:todo@127.0.0.1:3307/todo
     - 大批量：多条SQL一次性执行完成，可以减少一条条执行SQL产生的额外开销，但必须确保进行充分的测试，并且在业务低峰时段或者非业务时段执行。
     - 大字段：blob、text类型的大字段要尽量少用，必须要用时，尽量与主业务表分离，减少对这类字段的检索和更新。
 
-建表：
+**建表**：
 1、尽量给每个字段都加上“not null”约束或者设置合理的默认值约束
 2、 每个列都必须添加`comment`注释
 3、单张表的字段数尽量空值在50个字段以内，如果字段过多可以考虑垂直拆分
@@ -76,9 +127,9 @@ mysql+pymysql://todo:todo@127.0.0.1:3307/todo
 2. MySQL 中支持多种类型的运算符，包括：算术运算符（`+`、`-`、`*`、`/`、`%`）、比较运算符（`=`、`<>`、`<=>`、`<`、`<=`、`>`、`>=`、`BETWEEN...AND..`.、`IN`、`IS NULL`、`IS NOT NULL`、`LIKE`、`RLIKE`、`REGEXP`）、逻辑运算符（`NOT`、`AND`、`OR`、`XOR`）和位运算符（`&`、`|`、`^`、`~`、`>>`、`<<`），我们可以在 DML 中使用这些运算符处理数据。
 3. 在查询数据时，可以在`SELECT`语句及其子句（如`WHERE`子句、`ORDER BY`子句、`HAVING`子句等）中使用函数，这些函数包括字符串函数、数值函数、时间日期函数、流程函数等，如下面的表格所示。
 
-- where：查询条件，比如 where id=1
+- where/where not：查询条件，比如 where id=1、where not a >= 10
 - as：别名，比如 select xxx as 'yyy'
-- and: 连接多个条件
+- and/or: 连接多个条件
 - in/not in：集合查找，比如 where a in (1,2)
 - between and：区间查找，比如 where a between 1 and 10
 - limit：分页，比如 limit 0,5
@@ -86,6 +137,8 @@ mysql+pymysql://todo:todo@127.0.0.1:3307/todo
 - group by：分组，比如 group by aaa
 - having：分组之后再过滤，比如 group by aaa having xxx > 5
 - distinct：去重
+- like: 模糊匹配 WHERE first_name LIKE 'J%';
+- IS NULL / IS NOT NULL: 判断null条件，WHERE department IS NULL;
 
 常用字符串函数。
 
@@ -159,7 +212,7 @@ mysql+pymysql://todo:todo@127.0.0.1:3307/todo
 1. 专用窗口函数，包括：`lead`、`lag`、`first_value`、`last_value`、`rank`、`dense_rank`和`row_number`等。
 2. 聚合函数，包括：`sum`、`avg`、`max`、`min`和`count`等。
 
-### 视图
+### 视图 VIEW
 
 视图是关系型数据库中将一组查询指令构成的结果集组合成可查询的数据表的对象。简单的说，视图就是虚拟的表，但与数据表不同的是，数据表是一种实体结构，而视图是一种虚拟结构，你也可以将视图理解为保存在数据库中被赋予名字的 SQL 语句。
 
@@ -183,7 +236,7 @@ mysql+pymysql://todo:todo@127.0.0.1:3307/todo
 2. 创建视图时可以使用`order by`子句，但如果从视图中检索数据时也使用了`order by`，那么该视图中原先的`order by`会被覆盖。
 3. 视图无法使用索引，也不会激发触发器（实际开发中因为性能等各方面的考虑，通常不建议使用触发器，所以我们也不对这个概念进行介绍）的执行。
 
-### 函数
+### 函数 function
 
 函数声明后面的`no sql`是声明函数体并没有使用 SQL 语句；如果函数体中需要通过 SQL 读取数据，需要声明为`reads sql data`。
 定义函数前后的`delimiter`命令是为了修改终止符（定界符），因为函数体中的语句都是用`;`表示结束，如果不重新定义定界符，那么遇到的`;`的时候代码就会被截断执行，显然这不是我们想要的效果。
@@ -193,7 +246,7 @@ mysql+pymysql://todo:todo@127.0.0.1:3307/todo
 过程（又称存储过程）是事先编译好存储在数据库中的一组 SQL 的集合，调用过程可以简化应用程序开发人员的工作，减少与数据库服务器之间的通信，对于提升数据操作的性能也是有帮助的。
 
 
-### 索引 index
+### 索引 Index
 
 索引是 B + 树结构，相当于图书目录，避免全表扫描（全表扫描 = 逐行遍历，百万数据极慢）。 纯前端通病：只写业务逻辑，从不加索引，数据量上万后接口超时
 
@@ -236,9 +289,7 @@ WHERE u.id = 1;
 
 若order.user\_id无索引，联表会全表循环匹配，数据量大直接超时。
 
-### 事务
-
-> 事务（transaction）
+### 事务 TRANSACTION
 
 事务是一组原子化 SQL 操作，当修改多个表的时候，并且这些表的数据是有关联的时候，事务是必须的。要不全部成功，要不全部不成功。
 
@@ -305,10 +356,6 @@ ROLLBACK; -- 回滚，所有修改失效
 
 MySQL事务通过ACID特性保证了数据的可靠性与一致性，并通过不同的隔离级别让用户在数据准确性和系统性能之间做出权衡。
 其底层实现依赖于InnoDB存储引擎的日志系统（Undo Log/Redo Log）、锁机制和MVCC等技术的协同工作
-
-### 视图 view
-
-> 视图可以简化查询、控制权限等
 
 ### typeorm
 
