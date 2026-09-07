@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pinpoint 介绍 · 分布式链路追踪全家桶</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" integrity="sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/" crossorigin="anonymous"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: #020617;
+      min-height: 100vh;
+      padding: 2rem;
+      color: white;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .header { margin-bottom: 2rem; }
+    .header-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+    .pulse-dot { width: 12px; height: 12px; background: #22d3ee; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; }
+    .subtitle { color: #94a3b8; font-size: 0.875rem; margin-left: 1.75rem; max-width: 90ch; }
+    .lead { color: #cbd5e1; font-size: 0.9rem; margin: 1rem 0 0 1.75rem; line-height: 1.6; }
+    .diagram-container {
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 1rem;
+      border: 1px solid #1e293b;
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+    svg { width: 100%; min-width: 900px; display: block; }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .card {
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 0.75rem;
+      border: 1px solid #1e293b;
+      padding: 1.25rem;
+    }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .card-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .card-dot.cyan { background: #22d3ee; }
+    .card-dot.emerald { background: #34d399; }
+    .card-dot.violet { background: #a78bfa; }
+    .card-dot.amber { background: #fbbf24; }
+    .card-dot.rose { background: #fb7185; }
+    .card h3 { font-size: 0.875rem; font-weight: 600; }
+    .card p { color: #cbd5e1; font-size: 0.78rem; line-height: 1.6; }
+    .card ul { list-style: none; color: #94a3b8; font-size: 0.75rem; }
+    .card li { margin-bottom: 0.375rem; line-height: 1.5; }
+    .card code { color: #22d3ee; font-size: 0.72rem; background: rgba(8,51,68,0.5); padding: 1px 4px; border-radius: 3px; }
+    .footer { text-align: center; margin-top: 1.5rem; color: #475569; font-size: 0.75rem; }
+    .toolbar { display: flex; gap: 0.5rem; margin-left: auto; flex-shrink: 0; align-items: center; }
+    .toolbar-toggle { background: transparent; border: none; color: #475569; cursor: pointer; font-size: 1.25rem; line-height: 1; padding: 0.25rem 0.5rem; border-radius: 0.375rem; transition: color 0.2s, background 0.2s; }
+    .toolbar-toggle:hover { color: #94a3b8; background: rgba(30, 41, 59, 0.5); }
+    .toolbar-actions { display: none; gap: 0.5rem; }
+    .toolbar.expanded .toolbar-actions { display: flex; }
+    .toolbar-actions button {
+      background: rgba(30, 41, 59, 0.8); border: 1px solid #334155; color: #94a3b8;
+      padding: 0.375rem 0.75rem; border-radius: 0.375rem; font-family: inherit;
+      font-size: 0.75rem; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .toolbar-actions button:hover { background: rgba(51, 65, 85, 0.8); color: white; border-color: #475569; }
+    @media print { body { background: #020617; padding: 1rem; } .toolbar { display: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="container" id="report-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-row">
+        <div class="pulse-dot"></div>
+        <h1>Pinpoint 介绍</h1>
+        <div class="toolbar">
+          <div class="toolbar-actions">
+            <button onclick="copyAsImage(this)">📋 复制</button>
+            <button onclick="downloadPNG(this)">🖼️ PNG</button>
+            <button onclick="downloadPDF(this)">📄 PDF</button>
+          </div>
+          <button class="toolbar-toggle" onclick="this.parentElement.classList.toggle('expanded')" title="导出选项" aria-label="导出选项">⋯</button>
+        </div>
+      </div>
+      <p class="subtitle">Agent（探针）· Collector（收集）· HBase（存储）· Web（可视化）—— 把一次请求在微服务间的完整旅程，画成可点击的拓扑和调用链。</p>
+      <p class="lead">一句话理解：Pinpoint 像给每个<b>请求</b>贴上<b>快递单号</b>。每经过一个服务就盖个戳（<b>span</b>），最后你能查到这个请求<b>走了哪些路、每段花了多久、卡在哪儿</b>。和 Prometheus 看"机器体检"不同，Pinpoint 看的是<b>请求的旅程</b>。</p>
+    </div>
+
+    <!-- Main Diagram -->
+    <div class="diagram-container">
+      <svg viewBox="0 0 1000 600">
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+
+        <!-- Background Grid -->
+        <rect width="100%" height="100%" fill="url(#grid)" />
+
+        <!-- ====== ARROWS (drawn first so boxes overlay them) ====== -->
+        <!-- App(+Agent) -> Collector -->
+        <line x1="210" y1="260" x2="298" y2="260" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="254" y="253" fill="#94a3b8" font-size="9" text-anchor="middle">上报 span</text>
+        <!-- Collector -> HBase -->
+        <line x1="450" y1="260" x2="548" y2="260" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="499" y="253" fill="#94a3b8" font-size="9" text-anchor="middle">写入链路</text>
+        <!-- HBase -> Web -->
+        <line x1="720" y1="260" x2="818" y2="260" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="769" y="253" fill="#94a3b8" font-size="9" text-anchor="middle">查询 trace</text>
+        <!-- Web -> User (vertical) -->
+        <line x1="895" y1="372" x2="895" y2="408" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="905" y="394" fill="#94a3b8" font-size="9">排障</text>
+
+        <!-- ====== REGION BOUNDARY ====== -->
+        <rect x="60" y="80" width="880" height="430" rx="12" fill="rgba(251, 191, 36, 0.05)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="72" y="100" fill="#fbbf24" font-size="10" font-weight="600">Pinpoint · 分布式链路追踪全家桶</text>
+
+        <!-- ====== STAGE A: 应用 + Agent ====== -->
+        <rect x="80" y="150" width="130" height="220" rx="8" fill="#0f172a"/>
+        <rect x="80" y="150" width="130" height="220" rx="8" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="145" y="174" fill="white" font-size="12" font-weight="600" text-anchor="middle">应用服务</text>
+        <text x="145" y="189" fill="#94a3b8" font-size="9" text-anchor="middle">Applications</text>
+        <text x="145" y="218" fill="#cbd5e1" font-size="9" text-anchor="middle">• Java / Spring</text>
+        <text x="145" y="238" fill="#cbd5e1" font-size="9" text-anchor="middle">• 微服务 A / B / C</text>
+        <text x="145" y="258" fill="#cbd5e1" font-size="9" text-anchor="middle">• 数据库 / Redis</text>
+        <text x="145" y="278" fill="#cbd5e1" font-size="9" text-anchor="middle">• 消息队列</text>
+        <text x="145" y="298" fill="#cbd5e1" font-size="9" text-anchor="middle">• 外部 API</text>
+        <text x="145" y="340" fill="#94a3b8" font-size="7" text-anchor="middle">一次请求跨多个服务</text>
+        <text x="145" y="352" fill="#94a3b8" font-size="7" text-anchor="middle">出问题不知卡在哪</text>
+
+        <!-- ====== Agent (bytecode probe, on the arrow gap) ====== -->
+        <rect x="218" y="244" width="78" height="32" rx="4" fill="rgba(251, 146, 60, 0.3)" stroke="#fb923c" stroke-width="1"/>
+        <text x="257" y="258" fill="#fb923c" font-size="8" font-weight="600" text-anchor="middle">Agent</text>
+        <text x="257" y="270" fill="#fb923c" font-size="6" text-anchor="middle">字节码插桩探针</text>
+
+        <!-- ====== STAGE B: Collector ====== -->
+        <rect x="300" y="150" width="150" height="220" rx="8" fill="#0f172a"/>
+        <rect x="300" y="150" width="150" height="220" rx="8" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="375" y="174" fill="white" font-size="12" font-weight="600" text-anchor="middle">Collector</text>
+        <text x="375" y="189" fill="#34d399" font-size="9" text-anchor="middle">采集 · 接收链路</text>
+        <rect x="320" y="208" width="110" height="40" rx="4" fill="rgba(6,78,59,0.25)" stroke="#34d399" stroke-width="0.8"/>
+        <text x="375" y="224" fill="white" font-size="9" text-anchor="middle">SpanReceiver</text>
+        <text x="375" y="238" fill="#94a3b8" font-size="7" text-anchor="middle">接收 span 数据</text>
+        <rect x="320" y="256" width="110" height="40" rx="4" fill="rgba(6,78,59,0.25)" stroke="#34d399" stroke-width="0.8"/>
+        <text x="375" y="272" fill="white" font-size="9" text-anchor="middle">Dispatcher</text>
+        <text x="375" y="286" fill="#94a3b8" font-size="7" text-anchor="middle">按 TraceId 路由</text>
+        <rect x="320" y="304" width="110" height="40" rx="4" fill="rgba(6,78,59,0.25)" stroke="#34d399" stroke-width="0.8"/>
+        <text x="375" y="320" fill="white" font-size="9" text-anchor="middle">HBaseSink</text>
+        <text x="375" y="334" fill="#94a3b8" font-size="7" text-anchor="middle">异步落库</text>
+        <text x="375" y="360" fill="#34d399" font-size="7" text-anchor="middle">像快递分拣中心</text>
+
+        <!-- ====== STAGE C: HBase ====== -->
+        <rect x="550" y="150" width="170" height="220" rx="8" fill="#0f172a"/>
+        <rect x="550" y="150" width="170" height="220" rx="8" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="635" y="174" fill="white" font-size="12" font-weight="600" text-anchor="middle">HBase</text>
+        <text x="635" y="189" fill="#a78bfa" font-size="9" text-anchor="middle">存储 · 海量链路</text>
+        <!-- cluster ring -->
+        <rect x="566" y="206" width="138" height="130" rx="6" fill="transparent" stroke="#a78bfa" stroke-width="0.8" stroke-dasharray="4,4"/>
+        <text x="635" y="221" fill="#a78bfa" font-size="7" text-anchor="middle">集群 Cluster</text>
+        <rect x="582" y="232" width="106" height="28" rx="4" fill="rgba(76,29,149,0.25)" stroke="#a78bfa" stroke-width="1"/>
+        <text x="635" y="250" fill="white" font-size="9" text-anchor="middle">Node 1 · 主</text>
+        <rect x="582" y="266" width="106" height="28" rx="4" fill="rgba(76,29,149,0.25)" stroke="#a78bfa" stroke-width="1"/>
+        <text x="635" y="284" fill="white" font-size="9" text-anchor="middle">Node 2</text>
+        <rect x="582" y="300" width="106" height="28" rx="4" fill="rgba(76,29,149,0.25)" stroke="#a78bfa" stroke-width="1"/>
+        <text x="635" y="318" fill="white" font-size="9" text-anchor="middle">Node 3</text>
+        <text x="635" y="352" fill="#a78bfa" font-size="7" text-anchor="middle">列式存储，存调用链</text>
+        <text x="635" y="363" fill="#94a3b8" font-size="7" text-anchor="middle">像带索引的档案库</text>
+
+        <!-- ====== STAGE D: Pinpoint Web ====== -->
+        <rect x="820" y="150" width="150" height="220" rx="8" fill="#0f172a"/>
+        <rect x="820" y="150" width="150" height="220" rx="8" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="895" y="174" fill="white" font-size="12" font-weight="600" text-anchor="middle">Pinpoint Web</text>
+        <text x="895" y="189" fill="#22d3ee" font-size="9" text-anchor="middle">可视化 · 调用链</text>
+        <!-- mini topology graph: nodes + edges -->
+        <line x1="858" y1="232" x2="895" y2="225" stroke="#22d3ee" stroke-width="0.8" opacity="0.6"/>
+        <line x1="858" y1="232" x2="920" y2="250" stroke="#22d3ee" stroke-width="0.8" opacity="0.6"/>
+        <line x1="895" y1="225" x2="920" y2="250" stroke="#22d3ee" stroke-width="0.8" opacity="0.6"/>
+        <circle cx="858" cy="232" r="6" fill="#22d3ee" opacity="0.8"/>
+        <circle cx="895" cy="225" r="6" fill="#22d3ee" opacity="0.8"/>
+        <circle cx="920" cy="250" r="6" fill="#22d3ee" opacity="0.8"/>
+        <circle cx="895" cy="262" r="5" fill="#22d3ee" opacity="0.5"/>
+        <!-- rows -->
+        <rect x="842" y="278" width="106" height="24" rx="3" fill="rgba(8,51,68,0.25)" stroke="#22d3ee" stroke-width="0.6"/>
+        <text x="895" y="294" fill="white" font-size="8" text-anchor="middle">Topology 拓扑图</text>
+        <rect x="842" y="308" width="106" height="24" rx="3" fill="rgba(8,51,68,0.25)" stroke="#22d3ee" stroke-width="0.6"/>
+        <text x="895" y="324" fill="white" font-size="8" text-anchor="middle">Trace 调用链</text>
+        <rect x="842" y="338" width="106" height="24" rx="3" fill="rgba(8,51,68,0.25)" stroke="#22d3ee" stroke-width="0.6"/>
+        <text x="895" y="354" fill="white" font-size="8" text-anchor="middle">Inspector 详情</text>
+
+        <!-- ====== USER ====== -->
+        <rect x="835" y="410" width="120" height="48" rx="6" fill="rgba(136, 19, 55, 0.4)" stroke="#fb7185" stroke-width="1.5"/>
+        <text x="895" y="432" fill="white" font-size="11" font-weight="600" text-anchor="middle">用户 / 开发</text>
+        <text x="895" y="447" fill="#94a3b8" font-size="9" text-anchor="middle">浏览器排障</text>
+
+        <!-- ====== LEGEND ====== -->
+        <text x="60" y="540" fill="white" font-size="10" font-weight="600">图例</text>
+
+        <rect x="60" y="552" width="16" height="10" rx="2" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1"/>
+        <text x="82" y="561" fill="#94a3b8" font-size="8">应用服务</text>
+
+        <rect x="150" y="552" width="16" height="10" rx="2" fill="rgba(251, 146, 60, 0.3)" stroke="#fb923c" stroke-width="1"/>
+        <text x="172" y="561" fill="#94a3b8" font-size="8">Agent 探针</text>
+
+        <rect x="270" y="552" width="16" height="10" rx="2" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1"/>
+        <text x="292" y="561" fill="#94a3b8" font-size="8">Collector 采集</text>
+
+        <rect x="410" y="552" width="16" height="10" rx="2" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1"/>
+        <text x="432" y="561" fill="#94a3b8" font-size="8">HBase 存储</text>
+
+        <rect x="550" y="552" width="16" height="10" rx="2" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1"/>
+        <text x="572" y="561" fill="#94a3b8" font-size="8">Web 可视化</text>
+
+        <rect x="690" y="552" width="16" height="10" rx="2" fill="rgba(136, 19, 55, 0.4)" stroke="#fb7185" stroke-width="1"/>
+        <text x="712" y="561" fill="#94a3b8" font-size="8">用户 / 开发</text>
+      </svg>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="cards">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot rose"></div>
+          <h3>是什么 · What</h3>
+        </div>
+        <ul>
+          <li>• <code>Agent</code>：装在应用里的探针（字节码插桩）</li>
+          <li>• <code>Collector</code>：收集、接收链路数据</li>
+          <li>• <code>HBase</code>：海量链路存储（列式数据库）</li>
+          <li>• <code>Web</code>：拓扑图 + 调用链可视化界面</li>
+          <li>• <b>全自动埋点</b>，无需改业务代码</li>
+          <li>• 开源（Naver 开发，Apache 协议）</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot emerald"></div>
+          <h3>怎么工作 · How</h3>
+        </div>
+        <ul>
+          <li>① <b>埋点</b>：Agent 自动给代码加探针</li>
+          <li>② <b>上报</b>：每个请求生成 trace/span 发给 Collector</li>
+          <li>③ <b>落库</b>：Collector 写入 HBase</li>
+          <li>④ <b>查询</b>：Web 从 HBase 取链路</li>
+          <li>⑤ <b>可视化</b>：画出服务拓扑 + 时间线</li>
+          <li>• 一次请求跨多服务的<b>全链路</b></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot violet"></div>
+          <h3>为什么用 · Why</h3>
+        </div>
+        <ul>
+          <li>• 微服务一多，出问题不知卡在哪</li>
+          <li>• 看清"谁调谁"、每跳耗时、错在哪</li>
+          <li>• 自动埋点，接入成本低（Java 为主）</li>
+          <li>• 典型场景：慢请求、链路排障、依赖梳理</li>
+          <li>• 替代方案：SkyWalking、Zipkin、Jaeger</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <p class="footer">
+      Pinpoint · Agent + Collector + HBase + Web · 分布式链路追踪入门图解
+    </p>
+  </div>
+
+  <script>
+    async function copyAsImage(btn) {
+      const orig = btn.textContent;
+      try {
+        const el = document.getElementById('report-container');
+        const r = el.getBoundingClientRect();
+        const pad = 32;
+        const canvas = await html2canvas(document.body, { backgroundColor: '#020617', scale: 2, useCORS: true, ignoreElements: (e) => e.classList && e.classList.contains('toolbar'), x: r.left + window.scrollX - pad, y: r.top + window.scrollY - pad, width: r.width + pad * 2, height: r.height + pad * 2 });
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        btn.textContent = '✓ 已复制!';
+      } catch (e) {
+        btn.textContent = '✗ 失败';
+      }
+      setTimeout(() => btn.textContent = orig, 2000);
+    }
+
+    async function downloadPNG(btn) {
+      const orig = btn.textContent;
+      btn.textContent = '⏳ ...';
+      try {
+        const el = document.getElementById('report-container');
+        const r = el.getBoundingClientRect();
+        const pad = 32;
+        const canvas = await html2canvas(document.body, { backgroundColor: '#020617', scale: 2, useCORS: true, ignoreElements: (e) => e.classList && e.classList.contains('toolbar'), x: r.left + window.scrollX - pad, y: r.top + window.scrollY - pad, width: r.width + pad * 2, height: r.height + pad * 2 });
+        const link = document.createElement('a');
+        link.download = 'pinpoint.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        btn.textContent = '✓ 完成!';
+      } catch (e) {
+        btn.textContent = '✗ 失败';
+      }
+      setTimeout(() => btn.textContent = orig, 2000);
+    }
+
+    async function downloadPDF(btn) {
+      const orig = btn.textContent;
+      btn.textContent = '⏳ ...';
+      try {
+        const el = document.getElementById('report-container');
+        const r = el.getBoundingClientRect();
+        const pad = 32;
+        const canvas = await html2canvas(document.body, { backgroundColor: '#020617', scale: 2, useCORS: true, ignoreElements: (e) => e.classList && e.classList.contains('toolbar'), x: r.left + window.scrollX - pad, y: r.top + window.scrollY - pad, width: r.width + pad * 2, height: r.height + pad * 2 });
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const orientation = canvas.width > canvas.height ? 'landscape' : 'portrait';
+        const pdf = new jsPDF({ orientation, unit: 'px', format: [canvas.width, canvas.height], hotfixes: ['px_scaling'] });
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save('pinpoint.pdf');
+        btn.textContent = '✓ 完成!';
+      } catch (e) {
+        btn.textContent = '✗ 失败';
+      }
+      setTimeout(() => btn.textContent = orig, 2000);
+    }
+  </script>
+</body>
+</html>
