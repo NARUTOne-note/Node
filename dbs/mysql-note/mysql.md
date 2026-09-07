@@ -274,6 +274,23 @@ START TRANSACTION 开启事务后所有的 sql 语句都可以 ROLLBACK，除非
 - 性能很差，只能一个个的事务执行
 
 ```sql
+-- 1. 开始一个事务
+START TRANSACTION;
+-- 或者使用简写
+BEGIN;
+
+-- 2. 执行一系列SQL操作
+-- UPDATE account SET balance = balance - 100 WHERE id = 1;
+-- UPDATE account SET balance = balance + 100 WHERE id = 2;
+
+-- 3. 如果所有操作成功，提交事务，使更改永久生效
+COMMIT;
+
+-- 4. 如果中途出错，回滚事务，撤销所有更改
+ROLLBACK;
+```
+
+```sql
 START TRANSACTION; -- 开启事务
 UPDATE `user` SET balance = balance - 100 WHERE id = 1;
 UPDATE `user` SET balance = balance + 100 WHERE id = 2;
@@ -285,6 +302,9 @@ UPDATE `user` SET balance = balance - 100 WHERE id = 1;
 UPDATE `user` SET balance = balance + 100 WHERE id = 99999;
 ROLLBACK; -- 回滚，所有修改失效
 ```
+
+MySQL事务通过ACID特性保证了数据的可靠性与一致性，并通过不同的隔离级别让用户在数据准确性和系统性能之间做出权衡。
+其底层实现依赖于InnoDB存储引擎的日志系统（Undo Log/Redo Log）、锁机制和MVCC等技术的协同工作
 
 ### 视图 view
 
