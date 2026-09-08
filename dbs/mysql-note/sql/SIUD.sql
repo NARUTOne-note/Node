@@ -244,7 +244,8 @@ SELECT stu_id,
   FROM tb_student
  WHERE stu_name LIKE '%不%'
        OR stu_name LIKE '%嫣%';
-       
+
+-- union 连接两个以上select，结果组合到一个结果集合，并去除重复的行
 SELECT stu_id,
        stu_name
   FROM tb_student
@@ -288,7 +289,7 @@ SELECT stu_name,
        stu_birth
   FROM tb_student
  WHERE stu_sex = 1
- ORDER BY stu_birth ASC;
+ ORDER BY stu_birth DESC;
  
 -- 补充：将上面的生日换算成年龄(日期函数、数值函数)
 SELECT stu_name AS 姓名,

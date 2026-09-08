@@ -17,15 +17,27 @@
 
 **基础术语**
 
--  **主键**：主键是唯一的。一个数据表中只能包含一个主键。你可以使用主键来查询数据。
+-  **主键**：PRIMARY KEY（column），主键是唯一的。一个数据表中只能包含一个主键。你可以使用主键来查询数据。
+-  **复合主键**：PRIMARY KEY (column1, column2)，主键可以由一个或多个字段共同组成。当它由两个（或以上）字段组成时，就是大家常说的“双主键”或“联合主键”。
+  - 在这种情况下，是这些字段的组合值在整张表中必须是唯一的，而单个字段的值可以重复。
+  - 组成主键的所有字段都不能为空（NOT NULL）
+  - 大数据量写入性能问题
 -  **外键**：外键用于关联两个表。
 -  **复合键**：复合键（组合键）将多个列作为一个索引键，一般用于复合索引。
 -  **索引**：使用索引可快速访问数据库表中的特定信息。索引是对数据库表中一列或多列的值进行排序的一种结构。类似于书籍的目录。
 -  **参照完整性**：参照的完整性要求关系中不允许引用不存在的实体。与实体完整性是关系模型必须满足的完整性约束条件，目的是保证数据的一致性。
+- **数据唯一性**：数据表中设置指定的字段为 PRIMARY KEY（主键） 或者 UNIQUE（唯一） 索引来保证数据的唯一性。
 
 ## mysql
 
 [mysql 基础教程](https://www.runoob.com/mysql/mysql-administration.html)
+
+连接：
+
+```bash
+# mysql 数据库，驱动 pymysql(python)，用户名/密码 todo/todo，地址，端口，数据库
+mysql+pymysql://todo:todo@127.0.0.1:3307/todo
+```
 
 window环境命令：
 
@@ -38,23 +50,26 @@ net stop mysql
 # 连接, root账户
 mysql -u root -p
 
-# 创建新用户
+```
+
+```sql
+--- 创建新用户
 CREATE USER 'username'@'host' IDENTIFIED BY 'password';
 
-# 删除用户
+--- 删除用户
 DROP USER 'username'@'host';
 
-# 修改密码
+--- 修改密码
 ALTER USER 'john'@'localhost' IDENTIFIED BY 'newpassword456';
 
-# databases
+--- databases
 create DATABASE [XXX];
 drop DATABSE [XXX];
 
 show databases;
 use [database_name];
 
-# tables
+--- tables
 show tables;
 
 CREATE TABLE table_name (
@@ -64,7 +79,13 @@ CREATE TABLE table_name (
 );
 DROP Table [xxxx];
 
-# crud
+-- 导出数据到文件
+SELECT column1, column2, ...
+INTO OUTFILE 'file_path'
+FROM your_table
+WHERE your_conditions;
+
+--- crud
 INSERT INTO table_name (column1, column2, column3, ...)
 VALUES (value1, value2, value3, ...);
 
@@ -80,13 +101,54 @@ WHERE condition;
 
 DELETE FROM table_name
 WHERE condition;
-```
 
-连接：
+--- union 连接两个以上select，结果组合到一个结果集合，并去除重复的行
+SELECT column1, column2, ...
+FROM table1
+WHERE condition1
+UNION
+SELECT column1, column2, ...
+FROM table2
+WHERE condition2
+[ORDER BY column1, column2, ...];
 
-```bash
-# mysql 数据库，驱动 pymysql(python)，用户名/密码 todo/todo，地址，端口，数据库
-mysql+pymysql://todo:todo@127.0.0.1:3307/todo
+--- 根据一个或多个列对结果集进行分组
+SELECT column1, aggregate_function(column2)
+FROM table_name
+WHERE condition
+GROUP BY column1;
+
+-- inner join 内连接
+SELECT orders.order_id, customers.customer_name, products.product_name
+FROM orders
+INNER JOIN customers ON orders.customer_id = customers.customer_id
+INNER JOIN order_items ON orders.order_id = order_items.order_id
+INNER JOIN products ON order_items.product_id = products.product_id
+WHERE orders.order_date >= '2023-01-01';
+
+-- LEFT JOIN 左连接
+SELECT customers.customer_id, customers.customer_name, orders.order_id
+FROM customers
+LEFT JOIN orders ON customers.customer_id = orders.customer_id;
+
+-- RIGHT JOIN 左连接
+SELECT customers.customer_id, orders.order_id
+FROM customers
+RIGHT JOIN orders ON customers.customer_id = orders.customer_id;
+
+-- REGEXP 正则匹配
+SELECT name FROM person_tbl WHERE name REGEXP 'ok$';
+
+-- ALTER 修改表字段、索引等
+ALTER TABLE table_name
+ADD COLUMN new_column_name datatype;
+-- 修改字段类型
+ALTER TABLE TABLE_NAME
+MODIFY COLUMN column_name new_datatype;
+-- 修改字段名
+ALTER TABLE table_name
+CHANGE COLUMN old_column_name new_column_name datatype;
+
 ```
 
 ### 数据类型
@@ -117,13 +179,14 @@ mysql+pymysql://todo:todo@127.0.0.1:3307/todo
 ## SQL
 
 1、**DDL**（数据定义语言），主要用于创建、删除、修改数据库中的对象，比如创建、删除和修改二维表，核心的关键字包括`create`、`drop`和`alter`
+    - ALTER 命令用于修改数据库、表和索引等对象的结构。
 2、**DML**（数据操作语言），主要负责数据的插入、删除、更新和查询，关键词包括`insert`、`delete`、`update`和`select`
 3、**DCL**（数据控制语言），用于授予和召回权限，核心关键词是`grant`和`revoke`
 4、**TCL**（事务控制语言），通常用于事务控制
 
 **SELECT**查询语句:
 
-1、MySQL目前的版本不支持全外连接，上面我们通过`union`操作，将左外连接和右外连接的结果求并集实现全外连接的效果。
+1、MySQL目前的版本不支持全外连接，我们通过`union`操作结果并集去重，将左外连接和右外连接的结果求并集实现全外连接的效果。 `UNION ALL` 不去重
 2. MySQL 中支持多种类型的运算符，包括：算术运算符（`+`、`-`、`*`、`/`、`%`）、比较运算符（`=`、`<>`、`<=>`、`<`、`<=`、`>`、`>=`、`BETWEEN...AND..`.、`IN`、`IS NULL`、`IS NOT NULL`、`LIKE`、`RLIKE`、`REGEXP`）、逻辑运算符（`NOT`、`AND`、`OR`、`XOR`）和位运算符（`&`、`|`、`^`、`~`、`>>`、`<<`），我们可以在 DML 中使用这些运算符处理数据。
 3. 在查询数据时，可以在`SELECT`语句及其子句（如`WHERE`子句、`ORDER BY`子句、`HAVING`子句等）中使用函数，这些函数包括字符串函数、数值函数、时间日期函数、流程函数等，如下面的表格所示。
 
@@ -133,12 +196,15 @@ mysql+pymysql://todo:todo@127.0.0.1:3307/todo
 - in/not in：集合查找，比如 where a in (1,2)
 - between and：区间查找，比如 where a between 1 and 10
 - limit：分页，比如 limit 0,5
-- order by：排序，可以指定先根据什么升序、如果相等再根据什么降序，比如 order by a desc,b asc
-- group by：分组，比如 group by aaa
+- order by：排序，可以按照一个或多个列的值进行升序（ASC）或降序（DESC）排序，默认升序，比如 order by a desc,b asc
+- group by：分组，在分组的其他列上我们可以使用 COUNT, SUM, AVG,等函数。GROUP BY 语句是 SQL 查询中用于汇总和分析数据的重要工具；比如 group by aaa
 - having：分组之后再过滤，比如 group by aaa having xxx > 5
 - distinct：去重
-- like: 模糊匹配 WHERE first_name LIKE 'J%';
-- IS NULL / IS NOT NULL: 判断null条件，WHERE department IS NULL;
+- like: 模糊匹配 WHERE first_name LIKE 'J%'; 'a%'(开头）、'%a'（结尾）、'%a%'（包含）
+- IS NULL / IS NOT NULL: 判断null条件；WHERE department IS NULL;
+- INNER JOIN（内连接,或等值连接）：获取两个表中字段匹配关系的记录。
+- LEFT JOIN（左连接）：获取左表所有记录，即使右表没有对应匹配的记录，有匹配的右表行，也返回。
+- RIGHT JOIN（右连接）： 与 LEFT JOIN 相反，用于获取右表所有记录，即使左表没有对应匹配的记录。
 
 常用字符串函数。
 
@@ -255,9 +321,26 @@ mysql+pymysql://todo:todo@127.0.0.1:3307/todo
 1. **最适合**索引的列是出现在**WHERE子句**和连接子句中的列。
 2. **原则**：查询高频字段建索引，写入频繁字段少建索引。
 3. 索引列的基数越大（取值多、重复值少），索引的效果就越好。
-4. 使用**前缀索引**可以减少索引占用的空间，内存中可以缓存更多的索引。
+4. 索引需要占用额外的存储空间，使用**前缀索引**可以减少索引占用的空间，内存中可以缓存更多的索引。
 5. **索引不是越多越好**，虽然索引加速了读操作（查询），但是写操作（增、删、改）都会变得更慢，因为数据的变化会导致索引的更新，就如同书籍章节的增删需要更新目录一样。
 6. 使用 InnoDB 存储引擎时，表的普通索引都会保存主键的值，所以**主键要尽可能选择较短的数据类型**，这样可以有效的减少索引占用的空间，提升索引的缓存效果。
+
+```sql
+-- CREATE INDEX 语句可以创建普通索引；CREATE UNIQUE INDEX创建唯一索引
+CREATE INDEX index_name
+ON table_name (column1 [ASC|DESC], column2 [ASC|DESC], ...);
+
+-- 创建表的时候直接指定
+CREATE TABLE table_name (
+  column1 data_type,
+  column2 data_type,
+  ...,
+  INDEX index_name (column1 [ASC|DESC], column2 [ASC|DESC], ...)
+);
+
+-- 删除索引
+DROP INDEX index_name ON table_name;
+```
 
 **分类**
 
@@ -337,8 +420,14 @@ BEGIN;
 -- 3. 如果所有操作成功，提交事务，使更改永久生效
 COMMIT;
 
--- 4. 如果中途出错，回滚事务，撤销所有更改
+-- 4. 用于在事务中设置保存点，以便稍后能够回滚到该点
+SAVEPOINT xxx;
+
+-- 5. 如果中途出错，回滚事务，撤销所有更改
 ROLLBACK;
+
+-- 6. 用于回滚到之前设置的保存点
+ROLLBACK TO SAVEPOINT savepoint_name;
 ```
 
 ```sql
@@ -357,7 +446,38 @@ ROLLBACK; -- 回滚，所有修改失效
 MySQL事务通过ACID特性保证了数据的可靠性与一致性，并通过不同的隔离级别让用户在数据准确性和系统性能之间做出权衡。
 其底层实现依赖于InnoDB存储引擎的日志系统（Undo Log/Redo Log）、锁机制和MVCC等技术的协同工作
 
-### typeorm
+### 临时表
+
+保存一些临时数据，只在当前连接可见，当关闭连接时，MySQL 会自动删除表并释放所有空间。
+
+```sql
+CREATE TEMPORARY TABLE temp_table_name (
+  column1 datatype,
+  column2 datatype,
+  ...
+);
+
+-- 创建临时表
+CREATE TEMPORARY TABLE temp_orders AS
+SELECT * FROM orders WHERE order_date >= '2023-01-01';
+
+-- 查询临时表
+SELECT * FROM temp_orders;
+
+-- 插入数据到临时表
+INSERT INTO temp_orders (order_id, customer_id, order_date)
+VALUES (1001, 1, '2023-01-05');
+
+-- 查询临时表
+SELECT * FROM temp_orders;
+
+-- 删除临时表
+DROP TEMPORARY TABLE IF EXISTS temp_orders;
+```
+
+## typeorm
+
+> @nestjs/typeorm
 
 具体的 EntityManager 和 Repository 的方法有这些：
 
@@ -398,7 +518,7 @@ migration:run：执行 migration，会根据数据库 migrations 表的记录来
 migration:revert：撤销上次 migration，删掉数据库 migrations 里的上次执行记录
 这样就把生产环境里的建表和修改表的操作管理了起来。
 
-### 锁机制（并发数据竞争核心）
+## 锁机制（并发数据竞争核心）
 
 锁分两大维度：锁粒度（行锁 / 表锁）、锁类型（悲观锁 / 乐观锁）
 
