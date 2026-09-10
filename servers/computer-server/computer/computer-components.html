@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>计算机硬件组件 · 极简讲解</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      line-height: 1.6;
+      padding: 2rem;
+    }
+    .container { max-width: 980px; margin: 0 auto; }
+    header { margin-bottom: 2rem; }
+    h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; }
+    .subtitle { color: #64748b; margin-top: 0.5rem; font-size: 1.1rem; }
+
+    .section {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .section h2 { font-size: 1.25rem; margin-bottom: 1rem; }
+    .lead { color: #475569; font-size: 1rem; margin-bottom: 1rem; }
+
+    /* 组件卡片网格 */
+    .comps {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .comp {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .comp .icon { width: 100%; height: 120px; display: flex; justify-content: center; }
+    .comp .icon svg { height: 120px; width: auto; }
+    .comp h3 { font-size: 1.05rem; }
+    .comp .en { color: #94a3b8; font-size: 0.8rem; font-weight: 400; }
+    .comp .what { color: #334155; font-size: 0.9rem; }
+    .comp .analogy {
+      background: #fce7f3;
+      border: 1px solid #f9a8d4;
+      border-radius: 0.5rem;
+      padding: 0.5rem 0.7rem;
+      font-size: 0.85rem;
+    }
+    .comp .analogy b { color: #db2777; }
+
+    /* 关系澄清表 */
+    .rel { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+    .rel th, .rel td { border: 1px solid #e2e8f0; padding: 0.6rem 0.8rem; text-align: left; font-size: 0.88rem; }
+    .rel th { background: #f1f5f9; }
+
+    .takeaway {
+      background: #ecfeff;
+      border: 1px solid #67e8f9;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      font-size: 1rem;
+    }
+    footer { text-align: center; color: #94a3b8; font-size: 0.8rem; margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>计算机硬件组件</h1>
+      <p class="subtitle">一句话概括：电脑是一堆零件分工合作，把「算、记、连、看」各司其职拼起来。</p>
+    </header>
+
+    <!-- 是什么 -->
+    <div class="section">
+      <h2>电脑到底是什么？</h2>
+      <p class="lead">把电脑想成一个「加工厂」：有人算数、有人搬货、有人画图、有人保管档案、有人对外展示。每个零件就是工厂里的一个工位。</p>
+      <svg viewBox="0 0 800 200" style="width:100%;height:auto;display:block;">
+        <defs>
+          <marker id="arrowA" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#0284c7"/>
+          </marker>
+        </defs>
+        <!-- 用户输入 -->
+        <rect x="20" y="70" width="150" height="60" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+        <text x="95" y="105" fill="#0f172a" font-size="15" font-weight="600" text-anchor="middle">你（输入指令）</text>
+        <line x1="170" y1="100" x2="228" y2="100" stroke="#0284c7" stroke-width="2" marker-end="url(#arrowA)"/>
+        <!-- 电脑整体 -->
+        <rect x="230" y="40" width="340" height="120" rx="16" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+        <text x="400" y="68" fill="#0284c7" font-size="13" font-weight="700" text-anchor="middle">电脑（工厂）</text>
+        <text x="400" y="120" fill="#475569" font-size="12" text-anchor="middle">算 + 记 + 连 + 画</text>
+        <text x="400" y="142" fill="#94a3b8" font-size="11" text-anchor="middle">CPU/GPU/内存/主板/电源…</text>
+        <line x1="570" y1="100" x2="628" y2="100" stroke="#0284c7" stroke-width="2" marker-end="url(#arrowA)"/>
+        <!-- 输出 -->
+        <rect x="630" y="70" width="150" height="60" rx="12" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+        <text x="705" y="105" fill="#0f172a" font-size="15" font-weight="600" text-anchor="middle">显示器（看结果）</text>
+      </svg>
+    </div>
+
+    <!-- 各组件卡片 -->
+    <div class="section">
+      <h2>挨个认零件</h2>
+      <div class="comps">
+
+        <!-- 处理器 -->
+        <div class="comp">
+          <div class="icon">
+            <svg viewBox="0 0 120 120">
+              <rect x="35" y="35" width="50" height="50" rx="6" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+              <text x="60" y="66" fill="#0284c7" font-size="13" font-weight="700" text-anchor="middle">算</text>
+              <!-- 引脚 -->
+              <g stroke="#0284c7" stroke-width="1.5">
+                <line x1="45" y1="35" x2="45" y2="22"/><line x1="60" y1="35" x2="60" y2="22"/><line x1="75" y1="35" x2="75" y2="22"/>
+                <line x1="45" y1="85" x2="45" y2="98"/><line x1="60" y1="85" x2="60" y2="98"/><line x1="75" y1="85" x2="75" y2="98"/>
+                <line x1="35" y1="45" x2="22" y2="45"/><line x1="35" y1="60" x2="22" y2="60"/><line x1="35" y1="75" x2="22" y2="75"/>
+                <line x1="85" y1="45" x2="98" y2="45"/><line x1="85" y1="60" x2="98" y2="60"/><line x1="85" y1="75" x2="98" y2="75"/>
+              </g>
+            </svg>
+          </div>
+          <h3>处理器 <span class="en">Processor</span></h3>
+          <p class="what">能「算数 + 做决定」的芯片的总称。CPU、GPU 都是处理器，只是分工不同。</p>
+          <p class="analogy">像 <b>会算账的人</b>，谁能算、算什么不一样。</p>
+        </div>
+
+        <!-- CPU -->
+        <div class="comp">
+          <div class="icon">
+            <svg viewBox="0 0 120 120">
+              <rect x="30" y="30" width="60" height="60" rx="6" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+              <rect x="42" y="42" width="36" height="36" rx="4" fill="#bae6fd" stroke="#0284c7" stroke-width="1"/>
+              <text x="60" y="65" fill="#0f172a" font-size="12" font-weight="700" text-anchor="middle">CPU</text>
+              <g stroke="#0284c7" stroke-width="1.5">
+                <line x1="45" y1="30" x2="45" y2="18"/><line x1="60" y1="30" x2="60" y2="18"/><line x1="75" y1="30" x2="75" y2="18"/>
+                <line x1="45" y1="90" x2="45" y2="102"/><line x1="60" y1="90" x2="60" y2="102"/><line x1="75" y1="90" x2="75" y2="102"/>
+              </g>
+            </svg>
+          </div>
+          <h3>CPU <span class="en">中央处理器</span></h3>
+          <p class="what">电脑的「总指挥」，什么都管：算数、判断、调度别的零件。核多就多人一起算。</p>
+          <p class="analogy">像 <b>工厂的总经理 + 大脑</b>，慢但样样精通。</p>
+        </div>
+
+        <!-- GPU -->
+        <div class="comp">
+          <div class="icon">
+            <svg viewBox="0 0 120 120">
+              <rect x="25" y="25" width="70" height="70" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+              <g fill="#fde68a" stroke="#d97706" stroke-width="1">
+                <rect x="34" y="34" width="16" height="16" rx="2"/><rect x="54" y="34" width="16" height="16" rx="2"/><rect x="74" y="34" width="16" height="16" rx="2"/>
+                <rect x="34" y="54" width="16" height="16" rx="2"/><rect x="54" y="54" width="16" height="16" rx="2"/><rect x="74" y="54" width="16" height="16" rx="2"/>
+                <rect x="34" y="74" width="16" height="16" rx="2"/><rect x="54" y="74" width="16" height="16" rx="2"/><rect x="74" y="74" width="16" height="16" rx="2"/>
+              </g>
+            </svg>
+          </div>
+          <h3>GPU <span class="en">图形处理器</span></h3>
+          <p class="what">专干「同时算一大片」的活：画画面、渲染、AI。核心多但每个都简单。</p>
+          <p class="analogy">像 <b>画图车间里一大排小工</b>，单挑不行、人多力量大。</p>
+        </div>
+
+        <!-- 显卡 -->
+        <div class="comp">
+          <div class="icon">
+            <svg viewBox="0 0 130 120">
+              <rect x="15" y="35" width="100" height="55" rx="6" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+              <rect x="25" y="45" width="40" height="35" rx="4" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+              <text x="45" y="67" fill="#d97706" font-size="10" font-weight="700" text-anchor="middle">GPU</text>
+              <g fill="#dcfce7" stroke="#16a34a" stroke-width="1">
+                <rect x="72" y="45" width="14" height="10" rx="1"/><rect x="72" y="58" width="14" height="10" rx="1"/><rect x="72" y="71" width="14" height="10" rx="1"/>
+                <rect x="92" y="45" width="14" height="10" rx="1"/><rect x="92" y="58" width="14" height="10" rx="1"/><rect x="92" y="71" width="14" height="10" rx="1"/>
+              </g>
+              <line x1="15" y1="90" x2="15" y2="110" stroke="#64748b" stroke-width="2"/>
+              <line x1="115" y1="90" x2="115" y2="110" stroke="#64748b" stroke-width="2"/>
+            </svg>
+          </div>
+          <h3>显卡 <span class="en">Graphics Card</span></h3>
+          <p class="what">一块完整的板子，上面焊着 GPU 芯片 + 显存 + 供电，是「打包好的画图部门」。</p>
+          <p class="analogy">像 <b>整个画图部门</b>，GPU 是里面的人、显存是他们的桌。</p>
+        </div>
+
+        <!-- 内存 -->
+        <div class="comp">
+          <div class="icon">
+            <svg viewBox="0 0 130 120">
+              <rect x="30" y="40" width="70" height="40" rx="4" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+              <g stroke="#16a34a" stroke-width="1">
+                <line x1="38" y1="80" x2="38" y2="88"/><line x1="48" y1="80" x2="48" y2="88"/><line x1="58" y1="80" x2="58" y2="88"/><line x1="68" y1="80" x2="68" y2="88"/><line x1="78" y1="80" x2="78" y2="88"/><line x1="88" y1="80" x2="88" y2="88"/>
+              </g>
+              <rect x="42" y="48" width="8" height="24" fill="#86efac"/><rect x="54" y="48" width="8" height="24" fill="#86efac"/><rect x="66" y="48" width="8" height="24" fill="#86efac"/><rect x="78" y="48" width="8" height="24" fill="#86efac"/>
+            </svg>
+          </div>
+          <h3>内存 <span class="en">RAM / 内存条</span></h3>
+          <p class="what">CPU 的临时工作台，放「正在用」的数据。断电就清空，要快。</p>
+          <p class="analogy">像 <b>办公桌</b>，桌面越大能摊开的活越多，下班（关机）就收干净。</p>
+        </div>
+
+        <!-- 显存 -->
+        <div class="comp">
+          <div class="icon">
+            <svg viewBox="0 0 130 120">
+              <rect x="25" y="40" width="80" height="45" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+              <text x="65" y="60" fill="#d97706" font-size="11" font-weight="700" text-anchor="middle">显存 VRAM</text>
+              <text x="65" y="76" fill="#92400e" font-size="9" text-anchor="middle">GPU 专用桌</text>
+              <g stroke="#d97706" stroke-width="1.5">
+                <line x1="40" y1="85" x2="40" y2="95"/><line x1="55" y1="85" x2="55" y2="95"/><line x1="75" y1="85" x2="75" y2="95"/><line x1="90" y1="85" x2="90" y2="95"/>
+              </g>
+            </svg>
+          </div>
+          <h3>显存 <span class="en">VRAM</span></h3>
+          <p class="what">GPU 自己的临时工作台，专门放画面和纹理。和内存是两块独立的地方。</p>
+          <p class="analogy">像 <b>画图车间专用的画图桌</b>，跟总经理的办公桌不通用。</p>
+        </div>
+
+        <!-- 主板 -->
+        <div class="comp">
+          <div class="icon">
+            <svg viewBox="0 0 130 120">
+              <rect x="15" y="20" width="100" height="80" rx="6" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+              <rect x="40" y="35" width="30" height="30" rx="4" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+              <text x="55" y="54" fill="#0284c7" font-size="9" font-weight="700" text-anchor="middle">CPU</text>
+              <rect x="80" y="40" width="28" height="12" rx="2" fill="#dcfce7" stroke="#16a34a" stroke-width="1"/>
+              <rect x="80" y="56" width="28" height="12" rx="2" fill="#dcfce7" stroke="#16a34a" stroke-width="1"/>
+              <rect x="25" y="75" width="50" height="14" rx="2" fill="#fef3c7" stroke="#d97706" stroke-width="1"/>
+              <g stroke="#cbd5e1" stroke-width="1">
+                <line x1="20" y1="30" x2="110" y2="30"/><line x1="20" y1="92" x2="110" y2="92"/>
+              </g>
+            </svg>
+          </div>
+          <h3>主板 <span class="en">Motherboard</span></h3>
+          <p class="what">一块大板子，上面有插槽和「公路」（总线），把所有零件插上去连成一体。</p>
+          <p class="analogy">像 <b>工厂的走廊 + 电线</b>，零件各就各位，靠它互通。</p>
+        </div>
+
+        <!-- 硬盘存储 -->
+        <div class="comp">
+          <div class="icon">
+            <svg viewBox="0 0 130 120">
+              <rect x="25" y="35" width="80" height="55" rx="6" fill="#f5d0fe" stroke="#a855f7" stroke-width="1.5"/>
+              <circle cx="65" cy="62" r="16" fill="none" stroke="#a855f7" stroke-width="1.5"/>
+              <circle cx="65" cy="62" r="5" fill="#a855f7"/>
+              <text x="65" y="100" fill="#7e22be" font-size="9" text-anchor="middle">SSD / HDD</text>
+            </svg>
+          </div>
+          <h3>硬盘 <span class="en">Storage</span></h3>
+          <p class="what">长期仓库，放系统、照片、游戏。断电不丢，但要慢慢搬。</p>
+          <p class="analogy">像 <b>档案柜</b>，存得多但拿东西要时间，得先搬到桌上（内存）才能用。</p>
+        </div>
+
+        <!-- 电源 -->
+        <div class="comp">
+          <div class="icon">
+            <svg viewBox="0 0 130 120">
+              <rect x="30" y="30" width="70" height="60" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+              <circle cx="65" cy="60" r="14" fill="none" stroke="#d97706" stroke-width="2"/>
+              <line x1="65" y1="46" x2="65" y2="74" stroke="#d97706" stroke-width="2"/>
+              <line x1="51" y1="60" x2="79" y2="60" stroke="#d97706" stroke-width="2"/>
+              <text x="65" y="108" fill="#92400e" font-size="9" text-anchor="middle">220V 进 → 各路电出</text>
+            </svg>
+          </div>
+          <h3>电源 <span class="en">PSU</span></h3>
+          <p class="what">把墙上电变成各零件要的电压，喂饱所有人。功率不够会重启。</p>
+          <p class="analogy">像 <b>供电站</b>，给全厂供电，不够用就跳闸。</p>
+        </div>
+
+        <!-- 散热 -->
+        <div class="comp">
+          <div class="icon">
+            <svg viewBox="0 0 130 120">
+              <circle cx="65" cy="60" r="30" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+              <g stroke="#0284c7" stroke-width="2">
+                <line x1="65" y1="30" x2="65" y2="42"/><line x1="65" y1="78" x2="65" y2="90"/>
+                <line x1="35" y1="60" x2="47" y2="60"/><line x1="83" y1="60" x2="95" y2="60"/>
+                <line x1="44" y1="39" x2="52" y2="47"/><line x1="78" y1="73" x2="86" y2="81"/>
+                <line x1="86" y1="39" x2="78" y2="47"/><line x1="52" y1="73" x2="44" y2="81"/>
+              </g>
+              <circle cx="65" cy="60" r="6" fill="#0284c7"/>
+            </svg>
+          </div>
+          <h3>散热 <span class="en">Cooling</span></h3>
+          <p class="what">芯片算得快会发烫，散热（风扇/水冷）把热吹走，防止降频烧坏。</p>
+          <p class="analogy">像 <b>空调 + 排风扇</b>，机器越忙越要吹凉。</p>
+        </div>
+
+        <!-- 显示器 -->
+        <div class="comp">
+          <div class="icon">
+            <svg viewBox="0 0 130 120">
+              <rect x="20" y="20" width="90" height="60" rx="5" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+              <rect x="28" y="28" width="74" height="44" rx="2" fill="#bae6fd"/>
+              <line x1="50" y1="80" x2="80" y2="80" stroke="#64748b" stroke-width="2"/>
+              <line x1="65" y1="80" x2="65" y2="95" stroke="#64748b" stroke-width="2"/>
+              <rect x="48" y="95" width="34" height="6" rx="2" fill="#64748b"/>
+            </svg>
+          </div>
+          <h3>显示器 <span class="en">Monitor</span></h3>
+          <p class="what">GPU 画好的画面送到这里，给你看。是「输出设备」，不参与计算。</p>
+          <p class="analogy">像 <b>工厂的展示橱窗</b>，只摆成果、不生产。</p>
+        </div>
+
+        <!-- 机箱 -->
+        <div class="comp">
+          <div class="icon">
+            <svg viewBox="0 0 130 120">
+              <rect x="35" y="15" width="60" height="90" rx="5" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+              <line x1="50" y1="15" x2="50" y2="105" stroke="#cbd5e1" stroke-width="1"/>
+              <circle cx="80" cy="28" r="3" fill="#94a3b8"/>
+              <rect x="70" y="45" width="20" height="30" rx="2" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1"/>
+              <g stroke="#cbd5e1" stroke-width="1">
+                <line x1="58" y1="30" x2="62" y2="30"/><line x1="58" y1="40" x2="62" y2="40"/><line x1="58" y1="50" x2="62" y2="50"/>
+              </g>
+            </svg>
+          </div>
+          <h3>机箱 <span class="en">Case</span></h3>
+          <p class="what">铁皮盒子，把主机里的零件装一起，挡灰、固定、走风道。</p>
+          <p class="analogy">像 <b>工厂的厂房外壳</b>，不干活但保护里面的人。</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 关系澄清 -->
+    <div class="section">
+      <h2>容易混的关系</h2>
+      <table class="rel">
+        <tr><th>对比</th><th>区别一句话</th></tr>
+        <tr><td>处理器 vs CPU</td><td>处理器是「会算的芯片」总称；CPU 是其中当总指挥的那种。GPU 也是处理器。</td></tr>
+        <tr><td>CPU vs GPU</td><td>CPU 少核、每个强、样样能干；GPU 多核、每个弱、专攻并行（画面/AI）。</td></tr>
+        <tr><td>显卡 vs GPU vs 显存</td><td>显卡=整块板子；GPU=板上那颗算图芯片；显存=板上给 GPU 用的临时存储。三者是「部门/人/桌」关系。</td></tr>
+        <tr><td>内存 vs 显存</td><td>内存（RAM）给 CPU 用；显存（VRAM）给 GPU 用。各管各的桌，互不通用。</td></tr>
+        <tr><td>内存 vs 硬盘</td><td>内存是临时桌（快、断电清空）；硬盘是长期柜（慢、断电不丢）。先用必先从柜搬到桌。</td></tr>
+      </table>
+    </div>
+
+    <!-- 小结 -->
+    <div class="section">
+      <h2>记住一句话</h2>
+      <p class="takeaway">电脑 = <b>主板当地基</b>，上面插着 <b>CPU（总指挥）+ 内存（它的桌）+ 显卡（含 GPU 和显存，画图部门）+ 硬盘（档案柜）</b>，<b>电源喂饭、散热吹凉、机箱罩着、显示器给外面看</b>。</p>
+    </div>
+
+    <footer>计算机硬件组件 · 极简讲解 · 配套见 computer-architecture.html</footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>服务器组成架构图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" integrity="sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/" crossorigin="anonymous"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: #020617;
+      min-height: 100vh;
+      padding: 2rem;
+      color: white;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .header { margin-bottom: 2rem; }
+    .header-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+    .pulse-dot { width: 12px; height: 12px; background: #22d3ee; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; }
+    .subtitle { color: #94a3b8; font-size: 0.875rem; margin-left: 1.75rem; }
+    .diagram-container {
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 1rem;
+      border: 1px solid #1e293b;
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+    svg { width: 100%; min-width: 960px; display: block; }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .card {
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 0.75rem;
+      border: 1px solid #1e293b;
+      padding: 1.25rem;
+    }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .card-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .card-dot.cyan { background: #22d3ee; }
+    .card-dot.emerald { background: #34d399; }
+    .card-dot.violet { background: #a78bfa; }
+    .card-dot.amber { background: #fbbf24; }
+    .card-dot.rose { background: #fb7185; }
+    .card h3 { font-size: 0.875rem; font-weight: 600; }
+    .card ul { list-style: none; color: #94a3b8; font-size: 0.75rem; }
+    .card li { margin-bottom: 0.375rem; }
+    .footer { text-align: center; margin-top: 1.5rem; color: #475569; font-size: 0.75rem; }
+    .toolbar { display: flex; gap: 0.5rem; margin-left: auto; flex-shrink: 0; align-items: center; }
+    .toolbar-toggle {
+      background: transparent; border: none; color: #475569; cursor: pointer;
+      font-size: 1.25rem; line-height: 1; padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem; transition: color 0.2s, background 0.2s;
+    }
+    .toolbar-toggle:hover { color: #94a3b8; background: rgba(30, 41, 59, 0.5); }
+    .toolbar-actions { display: none; gap: 0.5rem; }
+    .toolbar.expanded .toolbar-actions { display: flex; }
+    .toolbar-actions button {
+      background: rgba(30, 41, 59, 0.8); border: 1px solid #334155; color: #94a3b8;
+      padding: 0.375rem 0.75rem; border-radius: 0.375rem; font-family: inherit;
+      font-size: 0.75rem; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .toolbar-actions button:hover { background: rgba(51, 65, 85, 0.8); color: white; border-color: #475569; }
+    @media print { body { background: #020617; padding: 1rem; } .toolbar { display: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="container" id="report-container">
+    <div class="header">
+      <div class="header-row">
+        <div class="pulse-dot"></div>
+        <h1>服务器组成架构</h1>
+        <p style="color:#94a3b8;font-size:0.875rem;">一台物理服务器 = 硬件 + 虚拟化，对外拆出多个虚拟机</p>
+        <div class="toolbar">
+          <div class="toolbar-actions">
+            <button onclick="copyAsImage(this)">📋 Copy</button>
+            <button onclick="downloadPNG(this)">🖼️ PNG</button>
+            <button onclick="downloadPDF(this)">📄 PDF</button>
+          </div>
+          <button class="toolbar-toggle" onclick="this.parentElement.classList.toggle('expanded')" title="导出选项" aria-label="导出选项">⋯</button>
+        </div>
+      </div>
+      <p class="subtitle">从硬件层（CPU/GPU/内存/硬盘/芯片）到虚拟化层（Hypervisor/虚拟机）的全景视图</p>
+    </div>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1000 880">
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+          </marker>
+          <marker id="arrowhead-cyan" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#22d3ee" />
+          </marker>
+          <marker id="arrowhead-amber" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#fbbf24" />
+          </marker>
+          <marker id="arrowhead-violet" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#a78bfa" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+
+        <rect width="100%" height="100%" fill="url(#grid)" />
+
+        <!-- ============ 顶层：虚拟化层（软件） ============ -->
+        <rect x="40" y="30" width="920" height="230" rx="12" fill="rgba(251, 191, 36, 0.05)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="56" y="52" fill="#fbbf24" font-size="11" font-weight="600">虚拟化层（软件） · 一台物理机拆出多个虚拟机</text>
+
+        <!-- 三个虚拟机 -->
+        <rect x="90" y="80" width="180" height="80" rx="6" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="180" y="108" fill="white" font-size="12" font-weight="600" text-anchor="middle">虚拟机 VM1</text>
+        <text x="180" y="126" fill="#94a3b8" font-size="9" text-anchor="middle">Linux + 网站</text>
+        <text x="180" y="142" fill="#22d3ee" font-size="8" text-anchor="middle">分配的 CPU/内存/硬盘</text>
+
+        <rect x="410" y="80" width="180" height="80" rx="6" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="500" y="108" fill="white" font-size="12" font-weight="600" text-anchor="middle">虚拟机 VM2</text>
+        <text x="500" y="126" fill="#94a3b8" font-size="9" text-anchor="middle">Windows + 数据库</text>
+        <text x="500" y="142" fill="#22d3ee" font-size="8" text-anchor="middle">分配的 CPU/内存/硬盘</text>
+
+        <rect x="730" y="80" width="180" height="80" rx="6" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="820" y="108" fill="white" font-size="12" font-weight="600" text-anchor="middle">虚拟机 VM3</text>
+        <text x="820" y="126" fill="#94a3b8" font-size="9" text-anchor="middle">Linux + 缓存</text>
+        <text x="820" y="142" fill="#22d3ee" font-size="8" text-anchor="middle">分配的 CPU/内存/硬盘</text>
+
+        <!-- Hypervisor 条 -->
+        <rect x="90" y="190" width="820" height="44" rx="6" fill="rgba(136, 19, 55, 0.4)" stroke="#fb7185" stroke-width="1.5"/>
+        <text x="500" y="208" fill="white" font-size="12" font-weight="600" text-anchor="middle">Hypervisor（虚拟化管理器）</text>
+        <text x="500" y="224" fill="#fb7185" font-size="9" text-anchor="middle">VMware ESXi / KVM / Hyper-V · 把硬件切成多份分给各虚拟机</text>
+
+        <!-- VM → Hypervisor 箭头 -->
+        <line x1="180" y1="160" x2="180" y2="188" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowhead)"/>
+        <line x1="500" y1="160" x2="500" y2="188" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowhead)"/>
+        <line x1="820" y1="160" x2="820" y2="188" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowhead)"/>
+
+        <!-- Hypervisor → 物理服务器 跨层箭头 -->
+        <line x1="500" y1="234" x2="500" y2="278" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrowhead-amber)"/>
+        <text x="515" y="260" fill="#fbbf24" font-size="9">调度底层硬件</text>
+
+        <!-- ============ 底层：物理服务器（硬件） ============ -->
+        <rect x="40" y="280" width="920" height="560" rx="12" fill="rgba(120, 53, 15, 0.05)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="56" y="302" fill="#fbbf24" font-size="11" font-weight="600">物理服务器（硬件） · 机房里那台实体机箱</text>
+
+        <!-- 主板/芯片组 总线（贯穿） -->
+        <rect x="80" y="330" width="840" height="36" rx="6" fill="rgba(136, 19, 55, 0.3)" stroke="#fb7185" stroke-width="1" stroke-dasharray="4,4"/>
+        <text x="500" y="352" fill="#fb7185" font-size="10" font-weight="600" text-anchor="middle">主板 / 芯片组（总线） · 所有部件都插在主板上、通过芯片组互相通信</text>
+
+        <!-- 四大核心硬件组件 -->
+        <!-- CPU -->
+        <rect x="100" y="400" width="180" height="120" rx="6" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="190" y="428" fill="white" font-size="13" font-weight="600" text-anchor="middle">CPU 中央处理器</text>
+        <text x="190" y="448" fill="#94a3b8" font-size="9" text-anchor="middle">类比：营业员</text>
+        <text x="190" y="466" fill="#94a3b8" font-size="8" text-anchor="middle">擅长串行通用计算</text>
+        <text x="190" y="480" fill="#94a3b8" font-size="8" text-anchor="middle">逻辑控制、少量线程</text>
+        <text x="190" y="504" fill="#22d3ee" font-size="8" text-anchor="middle">单核=1人，多核=多人</text>
+
+        <!-- GPU -->
+        <rect x="320" y="400" width="180" height="120" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="410" y="428" fill="white" font-size="13" font-weight="600" text-anchor="middle">GPU 图形处理器</text>
+        <text x="410" y="448" fill="#94a3b8" font-size="9" text-anchor="middle">类比：一群搬运工</text>
+        <text x="410" y="466" fill="#94a3b8" font-size="8" text-anchor="middle">擅长大规模并行计算</text>
+        <text x="410" y="480" fill="#94a3b8" font-size="8" text-anchor="middle">AI训练、图像渲染</text>
+        <text x="410" y="504" fill="#34d399" font-size="8" text-anchor="middle">成千上万个核心</text>
+
+        <!-- 内存 -->
+        <rect x="540" y="400" width="180" height="120" rx="6" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="630" y="428" fill="white" font-size="13" font-weight="600" text-anchor="middle">内存 RAM</text>
+        <text x="630" y="448" fill="#94a3b8" font-size="9" text-anchor="middle">类比：营业间</text>
+        <text x="630" y="466" fill="#94a3b8" font-size="8" text-anchor="middle">越大，摆放商品越多</text>
+        <text x="630" y="480" fill="#94a3b8" font-size="8" text-anchor="middle">断电即丢（暂存区）</text>
+        <text x="630" y="504" fill="#a78bfa" font-size="8" text-anchor="middle">CPU 要的数据先放这</text>
+
+        <!-- 硬盘 -->
+        <rect x="760" y="400" width="180" height="120" rx="6" fill="rgba(120, 53, 15, 0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="850" y="428" fill="white" font-size="13" font-weight="600" text-anchor="middle">硬盘 Storage</text>
+        <text x="850" y="448" fill="#94a3b8" font-size="9" text-anchor="middle">类比：仓库</text>
+        <text x="850" y="466" fill="#94a3b8" font-size="8" text-anchor="middle">越大，存放越多</text>
+        <text x="850" y="480" fill="#94a3b8" font-size="8" text-anchor="middle">断电不丢（持久）</text>
+        <text x="850" y="504" fill="#fbbf24" font-size="8" text-anchor="middle">HDD 机械 / SSD 固态</text>
+
+        <!-- 数据流箭头：硬盘 → 内存 → CPU -->
+        <line x1="760" y1="460" x2="722" y2="460" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrowhead-amber)"/>
+        <text x="741" y="452" fill="#fbbf24" font-size="8" text-anchor="middle">搬数据</text>
+
+        <line x1="540" y1="460" x2="282" y2="460" stroke="#a78bfa" stroke-width="2" marker-end="url(#arrowhead-violet)"/>
+        <text x="411" y="452" fill="#a78bfa" font-size="8" text-anchor="middle">取数据处理</text>
+
+        <!-- CPU ↔ GPU 协作（PCIe） -->
+        <line x1="280" y1="490" x2="318" y2="490" stroke="#34d399" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowhead)"/>
+        <line x1="318" y1="500" x2="280" y2="500" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowhead)"/>
+        <text x="299" y="514" fill="#34d399" font-size="7" text-anchor="middle">PCIe 协作</text>
+
+        <!-- 暂时不用数据：内存 ↔ 硬盘（回写）虚线 -->
+        <line x1="722" y1="475" x2="760" y2="475" stroke="#64748b" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+        <text x="741" y="490" fill="#64748b" font-size="7" text-anchor="middle">回写</text>
+
+        <!-- 各组件连到主板总线 -->
+        <line x1="190" y1="400" x2="190" y2="366" stroke="#64748b" stroke-width="1"/>
+        <line x1="410" y1="400" x2="410" y2="366" stroke="#64748b" stroke-width="1"/>
+        <line x1="630" y1="400" x2="630" y2="366" stroke="#64748b" stroke-width="1"/>
+        <line x1="850" y1="400" x2="850" y2="366" stroke="#64748b" stroke-width="1"/>
+
+        <!-- 外设/辅助：电源、网卡、散热 -->
+        <rect x="100" y="570" width="260" height="70" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="230" y="598" fill="white" font-size="11" font-weight="600" text-anchor="middle">电源（PSU）</text>
+        <text x="230" y="616" fill="#94a3b8" font-size="8" text-anchor="middle">双路冗余 · 断电也能撑一会</text>
+        <text x="230" y="630" fill="#94a3b8" font-size="8" text-anchor="middle">服务器 7×24 不能停</text>
+
+        <rect x="390" y="570" width="260" height="70" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="520" y="598" fill="white" font-size="11" font-weight="600" text-anchor="middle">网卡（NIC）</text>
+        <text x="520" y="616" fill="#94a3b8" font-size="8" text-anchor="middle">对外提供服务的人口</text>
+        <text x="520" y="630" fill="#94a3b8" font-size="8" text-anchor="middle">千兆 / 万兆 / 双口 bonding</text>
+
+        <rect x="680" y="570" width="260" height="70" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="810" y="598" fill="white" font-size="11" font-weight="600" text-anchor="middle">散热 / 机箱</text>
+        <text x="810" y="616" fill="#94a3b8" font-size="8" text-anchor="middle">风扇、风道、机房空调</text>
+        <text x="810" y="630" fill="#94a3b8" font-size="8" text-anchor="middle">高性能 = 高发热，必须压温</text>
+
+        <!-- 核心角色一句话 -->
+        <rect x="100" y="680" width="840" height="130" rx="8" fill="rgba(8, 51, 68, 0.2)" stroke="#22d3ee" stroke-width="1" stroke-dasharray="4,4"/>
+        <text x="120" y="704" fill="#22d3ee" font-size="11" font-weight="600">各部件在服务器里的角色</text>
+        <text x="120" y="726" fill="#94a3b8" font-size="9">· CPU = 干活的营业员，做逻辑运算和调度</text>
+        <text x="120" y="744" fill="#94a3b8" font-size="9">· GPU = 一群搬运工，并行处理海量相似任务（AI/图像）</text>
+        <text x="120" y="762" fill="#94a3b8" font-size="9">· 内存 = 营业间，CPU 要用的数据临时放这，断电即失</text>
+        <text x="120" y="780" fill="#94a3b8" font-size="9">· 硬盘 = 仓库，长期存数据，断电不丢；数据要先搬到内存 CPU 才能用</text>
+        <text x="120" y="798" fill="#94a3b8" font-size="9">· 芯片/主板 = 底板+交通网，把上面所有部件连起来互相通信</text>
+
+        <!-- ============ 图例 ============ -->
+        <text x="60" y="860" fill="white" font-size="10" font-weight="600">图例</text>
+        <rect x="110" y="850" width="16" height="10" rx="2" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1"/>
+        <text x="132" y="858" fill="#94a3b8" font-size="8">计算 / 虚拟机</text>
+        <rect x="220" y="850" width="16" height="10" rx="2" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1"/>
+        <text x="242" y="858" fill="#94a3b8" font-size="8">并行计算</text>
+        <rect x="320" y="850" width="16" height="10" rx="2" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1"/>
+        <text x="342" y="858" fill="#94a3b8" font-size="8">内存</text>
+        <rect x="390" y="850" width="16" height="10" rx="2" fill="rgba(120, 53, 15, 0.3)" stroke="#fbbf24" stroke-width="1"/>
+        <text x="412" y="858" fill="#94a3b8" font-size="8">硬盘 / 边界</text>
+        <rect x="490" y="850" width="16" height="10" rx="2" fill="rgba(136, 19, 55, 0.4)" stroke="#fb7185" stroke-width="1"/>
+        <text x="512" y="858" fill="#94a3b8" font-size="8">主板 / Hypervisor</text>
+        <line x1="620" y1="855" x2="636" y2="855" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrowhead-amber)"/>
+        <text x="642" y="858" fill="#94a3b8" font-size="8">数据流</text>
+        <line x1="700" y1="855" x2="716" y2="855" stroke="#64748b" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="722" y="858" fill="#94a3b8" font-size="8">控制 / 回写</text>
+      </svg>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot cyan"></div>
+          <h3>服务器是什么</h3>
+        </div>
+        <ul>
+          <li>• 一台为别人提供服务的计算机</li>
+          <li>• 硬件组成和个人 PC 相似</li>
+          <li>• 更强调性能、稳定、散热、安全</li>
+          <li>• 装在机房，7×24 不间断运行</li>
+          <li>• 上面跑 Linux / Windows Server</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot amber"></div>
+          <h3>常见分类</h3>
+        </div>
+        <ul>
+          <li>• 机架式（Rack）：1U/2U，最常见</li>
+          <li>• 塔式（Tower）：长得像台式机</li>
+          <li>• 刀片式（Blade）：高密度模块化</li>
+          <li>• 按用途：Web/数据库/文件/AI GPU</li>
+          <li>• 按形态：物理机 / 虚拟机 / 云</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot rose"></div>
+          <h3>虚拟机是什么角色</h3>
+        </div>
+        <ul>
+          <li>• 软件模拟出来的一台"假电脑"</li>
+          <li>• Hypervisor 把真实硬件切成多份</li>
+          <li>• 一台物理机可跑几十台虚拟机</li>
+          <li>• 互不干扰、可随时复制迁移</li>
+          <li>• 用低成本换来资源共享与隔离</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="footer">服务器组成架构 · 硬件层 + 虚拟化层 · tell-me 系列</p>
+  </div>
+
+  <script>
+    async function copyAsImage(btn) {
+      const orig = btn.textContent;
+      try {
+        const el = document.getElementById('report-container');
+        const r = el.getBoundingClientRect();
+        const pad = 32;
+        const canvas = await html2canvas(document.body, { backgroundColor: '#020617', scale: 2, useCORS: true, ignoreElements: (e) => e.classList && e.classList.contains('toolbar'), x: r.left + window.scrollX - pad, y: r.top + window.scrollY - pad, width: r.width + pad * 2, height: r.height + pad * 2 });
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        btn.textContent = '✓ Copied!';
+      } catch (e) { btn.textContent = '✗ Failed'; }
+      setTimeout(() => btn.textContent = orig, 2000);
+    }
+    async function downloadPNG(btn) {
+      const orig = btn.textContent; btn.textContent = '⏳ ...';
+      try {
+        const el = document.getElementById('report-container');
+        const r = el.getBoundingClientRect();
+        const pad = 32;
+        const canvas = await html2canvas(document.body, { backgroundColor: '#020617', scale: 2, useCORS: true, ignoreElements: (e) => e.classList && e.classList.contains('toolbar'), x: r.left + window.scrollX - pad, y: r.top + window.scrollY - pad, width: r.width + pad * 2, height: r.height + pad * 2 });
+        const link = document.createElement('a');
+        link.download = 'server-architecture.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        btn.textContent = '✓ Done!';
+      } catch (e) { btn.textContent = '✗ Failed'; }
+      setTimeout(() => btn.textContent = orig, 2000);
+    }
+    async function downloadPDF(btn) {
+      const orig = btn.textContent; btn.textContent = '⏳ ...';
+      try {
+        const el = document.getElementById('report-container');
+        const r = el.getBoundingClientRect();
+        const pad = 32;
+        const canvas = await html2canvas(document.body, { backgroundColor: '#020617', scale: 2, useCORS: true, ignoreElements: (e) => e.classList && e.classList.contains('toolbar'), x: r.left + window.scrollX - pad, y: r.top + window.scrollY - pad, width: r.width + pad * 2, height: r.height + pad * 2 });
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const orientation = canvas.width > canvas.height ? 'landscape' : 'portrait';
+        const pdf = new jsPDF({ orientation, unit: 'px', format: [canvas.width, canvas.height], hotfixes: ['px_scaling'] });
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save('server-architecture.pdf');
+        btn.textContent = '✓ Done!';
+      } catch (e) { btn.textContent = '✗ Failed'; }
+      setTimeout(() => btn.textContent = orig, 2000);
+    }
+  </script>
+</body>
+</html>
