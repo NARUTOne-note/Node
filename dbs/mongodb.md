@@ -57,6 +57,4 @@ db.xxx.count({ name: /guang/})
 db.xxx.find().sort({ age: -1})
 # 先按照 age 降序，再按照 name 升序
 db.xxx.find().sort({ age: -1, name: 1})
-
-
 ```

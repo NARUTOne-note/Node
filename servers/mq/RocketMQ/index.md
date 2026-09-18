@@ -27,7 +27,7 @@
 - **Consumer（消费者）**：取消息的一方。按消费组（Consumer Group）组织，组内分摊消费。
 - **消费模式**：集群（CLUSTERING，组内每条消息只被一个消费者消费，最常用）和广播（BROADCASTING，组内每个消费者都消费全量）。
 
-```
+```text
               注册/心跳             Producer
 Producer ────┐                   ───┐
              │                      │

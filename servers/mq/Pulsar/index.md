@@ -30,7 +30,7 @@ Yahoo 开发，后捐给 Apache。它最大的特点是**计算与存储分离**
   - `Key_Shared`：共享但保证同一 key 的消息总到同一消费者，既有并行又有 key 内有序。
 - **Cursor（游标）**：记录消费进度（类似 Kafka 的 offset），存在 BookKeeper 里，不依赖 Broker。
 
-```
+```text
 Producer ──发──> Broker (无状态，只收发) ──存──> BookKeeper 集群 (多副本持久化)
                        │
                        └──按订阅模式分发──> Consumers

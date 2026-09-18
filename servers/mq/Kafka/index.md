@@ -26,7 +26,7 @@ LinkedIn 开发，后来捐给 Apache。和 RabbitMQ 的"取走即删"不同，K
 - **Consumer Group（消费组）**：一组消费者共同消费一个 Topic，组内分区不重复消费。
 - **Replication（副本）**：每个分区有多份副本，一主（Leader）多从（Follower），挂了能切。
 
-```
+```text
 Producer ──发──> Topic (3 个分区)
                    ├─ Partition 0: [msg0, msg1, msg2, ...]   ──> 消费者A
                    ├─ Partition 1: [msg0, msg1, msg2, ...]   ──> 消费者B

@@ -1,4 +1,4 @@
-# GraphQL 
+# GraphQL
 
 > 全称是 graph query language
 

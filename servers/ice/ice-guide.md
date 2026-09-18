@@ -33,7 +33,7 @@ Ice 是一个开源的**分布式中间件 / RPC 框架**，由 ZeroC 公司开�
 
 写 Slice 合同 → `slice2xxx` 工具生成客户端存根 + 服务端骨架 → 客户端拿到 Proxy，调方法像调本地对象 → Ice 运行时偷偷序列化参数、按 Endpoint 找到服务端 → Object Adapter 接住、按 Identity 找到 Servant 执行 → 结果原路返回。
 
-```
+```text
 ┌─────────────┐         ┌──────────────┐         ┌──────────────┐
 │   Client    │         │   Network     │         │    Server    │
 │             │  请求   │  Ice Protocol │  分派   │              │

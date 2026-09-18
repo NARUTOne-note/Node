@@ -8,7 +8,7 @@
 
 Docker 的实现原理依赖 linux 的 Namespace、Control Group、UnionFS 这三种机制。**Namespace 做资源隔离，Control Group 做容器的资源限制，UnionFS 做文件系统的分层镜像存储、镜像合并**
 
-**核心优势**
+**核心优势**:
 
 - 跨平台一致性：解决"在我机器上能跑"的问题，环境标准化，确保开发、测试、生产环境一致。
 - 资源高效：容器直接共享主机内核，无需虚拟化整个操作系统，节省内存和 CPU。
@@ -16,7 +16,7 @@ Docker 的实现原理依赖 linux 的 Namespace、Control Group、UnionFS 这�
 - 隔离性：每个容器拥有独立的文件系统、网络和进程空间。
 - 可移植性：一次构建，到处运行
 
-### 核心概念
+## 核心概念
 
 - **容器**（Docker Container）：轻量化的运行实例，包含应用代码、运行时环境和依赖库。基于镜像创建，与其他容器隔离，共享主机操作系统内核（比虚拟机更高效）。
   - 容器是镜像的运行实例，是一个轻量级、可移植的执行环境。
@@ -226,7 +226,7 @@ CMD ["http-server", "-p", "8000"]
 | HEALTHCHECK | 定义周期性检查容器健康状态的命令。 | `HEALTHCHECK --interval=30s CMD wget -qO- http://127.0.0.1/health` |
 | SHELL | 覆盖Docker中默认的shell，用于RUN、CMD和ENTRYPOINT指令。 | `SHELL ["/bin/bash", "-c"]` |
 
-```
+```text
 "MYSQL_ROOT_PASSWORD=root",
 "MYSQL_USER=todo",
 "MYSQL_PASSWORD=todo",
@@ -245,7 +245,7 @@ volumes 常用容器内路径
 - `/data`: redis 数据持久化
 - `/usr/local/etc/redis/redis.conf`: redis 自定义配置
 
-**配置卷**
+**配置卷**:
 
 ```bash
 # 1. 创建 Volume
@@ -340,7 +340,7 @@ docker-compose build
 |     | **启动容器**，并根据 `depends_on` 等配置**按依赖顺序启动**\\-[\\-22](https://developer.aliyun.com/article/1356141)。 | `docker start 项目名_服务名_序号` |
 | **5. 日志聚合与前台运行** | **附加**到所有容器的日志流，并将它们聚合输出到终端\\-。 | `docker logs -f 容器名` (对每个容器) |
 
-**yml配置指令参考**
+**yml配置指令参考**:
 
 ```yml
 # compose版本
@@ -425,7 +425,7 @@ Docker 是支持自动重启的，可以在 docker run 的时候通过 --restart
 
 - Ubuntu：基于 Debian 的 Linux 操作系统。
 - CentOS： Linux 发行版之一，它是来自于 Red Hat Enterprise Linux(RHEL) 依照开放源代码规定发布的源代码所编译而成
-- Nginx: 一个高性能的 HTTP 和反向代理 web 服务器，同时也提供了 IMAP/POP3/SMTP 服务 
+- Nginx: 一个高性能的 HTTP 和反向代理 web 服务器，同时也提供了 IMAP/POP3/SMTP 服务
 - Node.js: 基于 Chrome V8 引擎的 JavaScript 运行环境，是一个让 JavaScript 运行在服务端的开发平台
 - MySQL: 最受欢迎的开源数据库。凭借其可靠性、易用性和性能，MySQL 已成为 Web 应用程序的数据库优先选择
 - Python: python 版本镜像
