@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kubernetes（K8s）是什么 —— 一张图看懂</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" integrity="sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/" crossorigin="anonymous"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: #020617;
+      min-height: 100vh;
+      padding: 2rem;
+      color: white;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      margin-bottom: 2rem;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .pulse-dot {
+      width: 12px;
+      height: 12px;
+      background: #22d3ee;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      font-size: 0.875rem;
+      margin-left: 1.75rem;
+    }
+
+    .diagram-container {
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 1rem;
+      border: 1px solid #1e293b;
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+
+    svg {
+      width: 100%;
+      min-width: 900px;
+      display: block;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 0.75rem;
+      border: 1px solid #1e293b;
+      padding: 1.25rem;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .card-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .card-dot.cyan { background: #22d3ee; }
+    .card-dot.emerald { background: #34d399; }
+    .card-dot.violet { background: #a78bfa; }
+    .card-dot.amber { background: #fbbf24; }
+    .card-dot.rose { background: #fb7185; }
+
+    .card h3 {
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .card ul {
+      list-style: none;
+      color: #94a3b8;
+      font-size: 0.75rem;
+    }
+
+    .card li {
+      margin-bottom: 0.375rem;
+    }
+
+    .relation {
+      margin-top: 2rem;
+    }
+
+    .relation h2 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 0.75rem;
+    }
+
+    .relation-row {
+      display: flex;
+      align-items: stretch;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .rel-box {
+      flex: 1 1 220px;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid #1e293b;
+      border-radius: 0.75rem;
+      padding: 1rem;
+    }
+
+    .rel-tag {
+      font-size: 0.625rem;
+      color: #64748b;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .rel-box h4 {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      margin: 0.375rem 0 0.5rem;
+    }
+
+    .rel-box p {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+
+    .rel-arrow {
+      display: flex;
+      align-items: center;
+      color: #475569;
+      font-size: 1.125rem;
+      flex: 0 0 auto;
+    }
+
+    .rel-note {
+      margin-top: 0.875rem;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      line-height: 1.7;
+    }
+
+    .rel-note strong {
+      color: #e2e8f0;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      color: #475569;
+      font-size: 0.75rem;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 0.5rem;
+      margin-left: auto;
+      flex-shrink: 0;
+      align-items: center;
+    }
+    .toolbar-toggle {
+      background: transparent;
+      border: none;
+      color: #475569;
+      cursor: pointer;
+      font-size: 1.25rem;
+      line-height: 1;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      transition: color 0.2s, background 0.2s;
+    }
+    .toolbar-toggle:hover { color: #94a3b8; background: rgba(30, 41, 59, 0.5); }
+    .toolbar-actions {
+      display: none;
+      gap: 0.5rem;
+    }
+    .toolbar.expanded .toolbar-actions { display: flex; }
+    .toolbar-actions button {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid #334155;
+      color: #94a3b8;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      font-family: inherit;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .toolbar-actions button:hover {
+      background: rgba(51, 65, 85, 0.8);
+      color: white;
+      border-color: #475569;
+    }
+
+    @media print {
+      body { background: #020617; padding: 1rem; }
+      .toolbar { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="report-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-row">
+        <div class="pulse-dot"></div>
+        <h1>Kubernetes（K8s）是什么</h1>
+        <div class="toolbar">
+          <div class="toolbar-actions">
+            <button onclick="copyAsImage(this)">📋 Copy</button>
+            <button onclick="downloadPNG(this)">🖼️ PNG</button>
+            <button onclick="downloadPDF(this)">📄 PDF</button>
+          </div>
+          <button class="toolbar-toggle" onclick="this.parentElement.classList.toggle('expanded')" title="Export options" aria-label="Export options">⋯</button>
+        </div>
+      </div>
+      <p class="subtitle">你说「我要 3 个副本」，它负责找机器、启动、挂了重启 —— 一个自动照顾程序的「码头调度系统」</p>
+    </div>
+
+    <!-- Main Diagram -->
+    <div class="diagram-container">
+      <svg viewBox="0 0 1000 720">
+        <!-- Definitions -->
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+
+        <!-- Background Grid -->
+        <rect width="100%" height="100%" fill="url(#grid)" />
+
+        <!-- ============================ 边界 ============================ -->
+
+        <!-- 集群边界 -->
+        <rect x="150" y="40" width="820" height="580" rx="12" fill="rgba(251, 191, 36, 0.05)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="162" y="58" fill="#fbbf24" font-size="10" font-weight="600">Kubernetes 集群（Cluster）</text>
+
+        <!-- 控制平面边界 -->
+        <rect x="170" y="60" width="780" height="140" rx="10" fill="transparent" stroke="#22d3ee" stroke-width="1" stroke-dasharray="4,4"/>
+        <text x="182" y="78" fill="#22d3ee" font-size="9" font-weight="600">控制平面 Control Plane（大脑，不跑你的程序）</text>
+
+        <!-- 工作节点 1 边界 -->
+        <rect x="170" y="230" width="380" height="290" rx="10" fill="transparent" stroke="#34d399" stroke-width="1" stroke-dasharray="4,4"/>
+        <text x="182" y="248" fill="#34d399" font-size="9" font-weight="600">工作节点 Node 1（机器 A）</text>
+
+        <!-- 工作节点 2 边界 -->
+        <rect x="580" y="230" width="370" height="290" rx="10" fill="transparent" stroke="#34d399" stroke-width="1" stroke-dasharray="4,4"/>
+        <text x="592" y="248" fill="#34d399" font-size="9" font-weight="600">工作节点 Node 2（机器 B）</text>
+
+        <!-- ============================ 箭头（先画，位于方框之下） ============================ -->
+
+        <!-- kubectl -> API Server -->
+        <line x1="132" y1="128" x2="196" y2="128" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="164" y="120" fill="#94a3b8" font-size="7" text-anchor="middle">下达</text>
+
+        <!-- CI/CD -> API Server -->
+        <line x1="132" y1="222" x2="194" y2="152" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>
+        <text x="136" y="190" fill="#94a3b8" font-size="7">自动部署</text>
+
+        <!-- 镜像仓库 -> 节点（kubelet 拉镜像） -->
+        <line x1="132" y1="322" x2="166" y2="322" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>
+        <text x="136" y="314" fill="#94a3b8" font-size="7">拉镜像</text>
+
+        <!-- 控制平面内部：组件都通过 API Server 读写状态 -->
+        <line x1="290" y1="158" x2="290" y2="184" stroke="#fb7185" stroke-width="1" stroke-dasharray="4,4"/>
+        <line x1="490" y1="158" x2="490" y2="184" stroke="#fb7185" stroke-width="1" stroke-dasharray="4,4"/>
+        <line x1="685" y1="158" x2="685" y2="184" stroke="#fb7185" stroke-width="1" stroke-dasharray="4,4"/>
+        <line x1="870" y1="158" x2="870" y2="184" stroke="#fb7185" stroke-width="1" stroke-dasharray="4,4"/>
+        <line x1="290" y1="184" x2="870" y2="184" stroke="#fb7185" stroke-width="1" stroke-dasharray="4,4"/>
+        <text x="296" y="196" fill="#fb7185" font-size="7">所有组件都通过 API Server 读写状态，etcd 是唯一的账本</text>
+
+        <!-- 控制平面 -> Node 1 -->
+        <line x1="265" y1="200" x2="265" y2="228" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>
+        <text x="272" y="218" fill="#94a3b8" font-size="7">下达指令</text>
+
+        <!-- 控制平面 -> Node 2 -->
+        <line x1="685" y1="200" x2="685" y2="228" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>
+        <text x="692" y="218" fill="#94a3b8" font-size="7">下达指令</text>
+
+        <!-- Node 1 内部：kubelet -> runtime -> Pod -->
+        <line x1="270" y1="312" x2="270" y2="327" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <line x1="360" y1="380" x2="360" y2="397" stroke="#34d399" stroke-width="1" stroke-dasharray="4,4" marker-end="url(#arrowhead)"/>
+
+        <!-- 用户 -> Ingress -> Service -->
+        <line x1="130" y1="572" x2="196" y2="572" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <line x1="370" y1="572" x2="416" y2="572" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+        <!-- Service -> Pod（流量进入节点） -->
+        <line x1="455" y1="545" x2="455" y2="522" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>
+        <line x1="575" y1="545" x2="615" y2="522" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>
+        <text x="468" y="538" fill="#94a3b8" font-size="7">转发到 Pod</text>
+
+        <!-- ============================ 组件方框 ============================ -->
+
+        <!-- 外部使用者 -->
+        <rect x="12" y="95" width="120" height="65" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="72" y="120" fill="white" font-size="11" font-weight="600" text-anchor="middle">kubectl / YAML</text>
+        <text x="72" y="138" fill="#94a3b8" font-size="8" text-anchor="middle">你说：我要什么</text>
+
+        <rect x="12" y="195" width="120" height="65" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="72" y="220" fill="white" font-size="11" font-weight="600" text-anchor="middle">CI/CD 流水线</text>
+        <text x="72" y="238" fill="#94a3b8" font-size="8" text-anchor="middle">机器自动部署</text>
+
+        <rect x="12" y="290" width="118" height="65" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="71" y="312" fill="white" font-size="11" font-weight="600" text-anchor="middle">镜像仓库</text>
+        <text x="71" y="329" fill="#94a3b8" font-size="8" text-anchor="middle">Registry</text>
+        <text x="71" y="344" fill="#94a3b8" font-size="7" text-anchor="middle">docker push 到这里</text>
+
+        <rect x="12" y="545" width="118" height="55" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="71" y="570" fill="white" font-size="11" font-weight="600" text-anchor="middle">用户 / 浏览器</text>
+        <text x="71" y="586" fill="#94a3b8" font-size="8" text-anchor="middle">发起请求</text>
+
+        <!-- 控制平面组件 -->
+        <rect x="200" y="100" width="180" height="58" rx="6" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="290" y="120" fill="white" font-size="11" font-weight="600" text-anchor="middle">API Server</text>
+        <text x="290" y="136" fill="#94a3b8" font-size="9" text-anchor="middle">总机 / 前台</text>
+        <text x="290" y="150" fill="#22d3ee" font-size="7" text-anchor="middle">所有指令的唯一入口</text>
+
+        <rect x="410" y="100" width="160" height="58" rx="6" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="490" y="120" fill="white" font-size="11" font-weight="600" text-anchor="middle">Scheduler</text>
+        <text x="490" y="136" fill="#94a3b8" font-size="9" text-anchor="middle">调度员</text>
+        <text x="490" y="150" fill="#22d3ee" font-size="7" text-anchor="middle">挑一台机器放 Pod</text>
+
+        <rect x="600" y="100" width="170" height="58" rx="6" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="685" y="120" fill="white" font-size="11" font-weight="600" text-anchor="middle">Controller</text>
+        <text x="685" y="136" fill="#94a3b8" font-size="9" text-anchor="middle">管家</text>
+        <text x="685" y="150" fill="#22d3ee" font-size="7" text-anchor="middle">少了就补，多了就删</text>
+
+        <rect x="800" y="100" width="140" height="58" rx="6" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="870" y="120" fill="white" font-size="11" font-weight="600" text-anchor="middle">etcd</text>
+        <text x="870" y="136" fill="#94a3b8" font-size="9" text-anchor="middle">账本 / 数据库</text>
+        <text x="870" y="150" fill="#22d3ee" font-size="7" text-anchor="middle">存集群全部状态</text>
+
+        <!-- Node 1 组件 -->
+        <rect x="190" y="262" width="160" height="50" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="270" y="282" fill="white" font-size="11" font-weight="600" text-anchor="middle">kubelet</text>
+        <text x="270" y="298" fill="#94a3b8" font-size="8" text-anchor="middle">驻场监工</text>
+        <text x="270" y="308" fill="#34d399" font-size="7" text-anchor="middle">拉镜像 → 起容器</text>
+
+        <rect x="362" y="262" width="168" height="50" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="446" y="282" fill="white" font-size="11" font-weight="600" text-anchor="middle">kube-proxy</text>
+        <text x="446" y="298" fill="#94a3b8" font-size="8" text-anchor="middle">网络守卫：转发流量</text>
+
+        <rect x="190" y="330" width="340" height="50" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="360" y="350" fill="white" font-size="11" font-weight="600" text-anchor="middle">容器运行时</text>
+        <text x="360" y="366" fill="#94a3b8" font-size="8" text-anchor="middle">真正启动容器（containerd / Docker）</text>
+
+        <!-- Node 1 上的 Pod -->
+        <rect x="185" y="400" width="350" height="105" rx="8" fill="transparent" stroke="#a78bfa" stroke-width="1" stroke-dasharray="4,4"/>
+        <text x="197" y="416" fill="#a78bfa" font-size="9" font-weight="600">Pod 副本 1（最小运行单元）</text>
+
+        <rect x="200" y="428" width="150" height="64" rx="6" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="275" y="452" fill="white" font-size="10" font-weight="600" text-anchor="middle">容器 A</text>
+        <text x="275" y="470" fill="#94a3b8" font-size="8" text-anchor="middle">你的应用</text>
+
+        <rect x="362" y="428" width="158" height="64" rx="6" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="441" y="452" fill="white" font-size="10" font-weight="600" text-anchor="middle">容器 B</text>
+        <text x="441" y="470" fill="#94a3b8" font-size="8" text-anchor="middle">边车 / 辅助进程</text>
+
+        <!-- Node 2 组件 -->
+        <rect x="600" y="262" width="160" height="50" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="680" y="282" fill="white" font-size="11" font-weight="600" text-anchor="middle">kubelet</text>
+        <text x="680" y="298" fill="#94a3b8" font-size="8" text-anchor="middle">驻场监工</text>
+        <text x="680" y="308" fill="#34d399" font-size="7" text-anchor="middle">也从镜像仓库拉镜像</text>
+
+        <rect x="775" y="262" width="155" height="50" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="852" y="282" fill="white" font-size="11" font-weight="600" text-anchor="middle">kube-proxy</text>
+        <text x="852" y="298" fill="#94a3b8" font-size="8" text-anchor="middle">网络守卫</text>
+
+        <!-- Node 2 上的 Pod -->
+        <rect x="600" y="330" width="330" height="80" rx="6" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="765" y="356" fill="white" font-size="10" font-weight="600" text-anchor="middle">Pod 副本 2</text>
+        <text x="765" y="374" fill="#94a3b8" font-size="8" text-anchor="middle">同一个应用，换台机器跑</text>
+        <text x="765" y="392" fill="#a78bfa" font-size="7" text-anchor="middle">Pod 是最小调度单元，不是容器</text>
+
+        <rect x="600" y="428" width="330" height="80" rx="6" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="765" y="454" fill="white" font-size="10" font-weight="600" text-anchor="middle">Pod 副本 3</text>
+        <text x="765" y="472" fill="#94a3b8" font-size="8" text-anchor="middle">一个挂了，它就自动补一个</text>
+        <text x="765" y="490" fill="#a78bfa" font-size="7" text-anchor="middle">这才是「自愈」</text>
+
+        <!-- 入口层 -->
+        <rect x="200" y="545" width="170" height="55" rx="6" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="285" y="570" fill="white" font-size="11" font-weight="600" text-anchor="middle">Ingress</text>
+        <text x="285" y="586" fill="#94a3b8" font-size="8" text-anchor="middle">大门：按域名/路径进来</text>
+
+        <rect x="420" y="545" width="180" height="55" rx="6" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="510" y="570" fill="white" font-size="11" font-weight="600" text-anchor="middle">Service</text>
+        <text x="510" y="586" fill="#94a3b8" font-size="8" text-anchor="middle">固定门牌：永远指向活着的 Pod</text>
+
+        <!-- ============================ 图例（在所有边界之外） ============================ -->
+
+        <text x="170" y="640" fill="white" font-size="10" font-weight="600">Legend</text>
+
+        <rect x="170" y="650" width="16" height="10" rx="2" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1"/>
+        <text x="192" y="658" fill="#94a3b8" font-size="8">控制平面（大脑）</text>
+
+        <rect x="170" y="668" width="16" height="10" rx="2" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1"/>
+        <text x="192" y="676" fill="#94a3b8" font-size="8">工作节点（干活的机器）</text>
+
+        <rect x="170" y="686" width="16" height="10" rx="2" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1"/>
+        <text x="192" y="694" fill="#94a3b8" font-size="8">Pod / 容器（你的程序）</text>
+
+        <rect x="430" y="650" width="16" height="10" rx="2" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1"/>
+        <text x="452" y="658" fill="#94a3b8" font-size="8">外部使用者 / 你</text>
+
+        <line x1="430" y1="673" x2="446" y2="673" stroke="#fb7185" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="452" y="676" fill="#94a3b8" font-size="8">指令 / 状态流</text>
+
+        <line x1="430" y1="691" x2="446" y2="691" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="452" y="694" fill="#94a3b8" font-size="8">用户流量</text>
+      </svg>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="cards">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot cyan"></div>
+          <h3>控制平面：集群的大脑</h3>
+        </div>
+        <ul>
+          <li>• 它自己不跑你的程序，只负责「安排」</li>
+          <li>• API Server：唯一出入口，所有请求都先找它</li>
+          <li>• Scheduler：挑一台合适、还装得下的机器</li>
+          <li>• Controller：盯着实际状态，缺了就补上</li>
+          <li>• etcd：唯一的账本，存着集群的「应该长什么样」</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot emerald"></div>
+          <h3>工作节点：真正干活的机器</h3>
+        </div>
+        <ul>
+          <li>• kubelet：驻场监工，替总部照看本机上的 Pod</li>
+          <li>• kube-proxy：把访问 Service 的流量导到具体 Pod</li>
+          <li>• 容器运行时：真正把容器启动起来的那只手</li>
+          <li>• 一台机器上可以跑很多个 Pod，按需分配</li>
+          <li>• 机器坏了，Pod 会被安排到别的机器上重开</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot violet"></div>
+          <h3>必须记住的三个名字</h3>
+        </div>
+        <ul>
+          <li>• Pod：最小的运行单元，里面装 1 个或多个容器</li>
+          <li>• Deployment：你声明「我要 3 个副本」，它来维持</li>
+          <li>• Service：给一组随时会变的 Pod 一个固定门牌</li>
+          <li>• YAML：你用文件写下「我想要什么」，而不是「怎么做」</li>
+          <li>• 三者关系：Deployment 管 Pod，Service 找到 Pod</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot amber"></div>
+          <h3>为什么大家都用它</h3>
+        </div>
+        <ul>
+          <li>• 声明式：说「我要什么」，系统自己去对齐</li>
+          <li>• 自愈：程序挂了自动重启，机器挂了自动搬家</li>
+          <li>• 滚动更新：新版一个个换，出问题可以回滚</li>
+          <li>• 弹性伸缩：忙时加副本，闲时减副本</li>
+          <li>• 你只做三件事：写 YAML → apply → 看状态</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Docker 与 K8s 的关系 -->
+    <div class="relation">
+      <h2>Docker 和 K8s 是什么关系？—— 上下游，不是竞品</h2>
+      <div class="relation-row">
+        <div class="rel-box" style="border-left: 2px solid #22d3ee;">
+          <div class="rel-tag">Step 1 · 打包</div>
+          <h4>Docker：把程序打进盒子</h4>
+          <p>把程序连同依赖装进一个标准盒子（镜像）。<br>它管的是「<strong>一个</strong>容器」，在「<strong>一台</strong>机器」上跑。</p>
+        </div>
+        <div class="rel-arrow">→</div>
+        <div class="rel-box" style="border-left: 2px solid #fbbf24;">
+          <div class="rel-tag">Step 2 · 存放</div>
+          <h4>镜像仓库 Registry</h4>
+          <p>盒子统一存放的地方（Docker Hub / Harbor / 云厂商）。<br>你 <strong>push</strong> 上去，任何机器都能 <strong>pull</strong> 下来。</p>
+        </div>
+        <div class="rel-arrow">→</div>
+        <div class="rel-box" style="border-left: 2px solid #a78bfa;">
+          <div class="rel-tag">Step 3 · 调度</div>
+          <h4>K8s：安排到整个车队</h4>
+          <p>把盒子在几十上百台机器上跑起来，管副本、管故障、管扩容、管流量。<br>K8s <strong>不负责打包</strong>，也不自己造盒子。</p>
+        </div>
+      </div>
+      <div class="rel-note">
+        <p>• <strong>镜像通用</strong>：Docker 打出来的镜像 K8s 原样能跑 —— 都遵守 OCI 标准。Docker 内部用的就是 containerd，K8s 现在的默认运行时也是 containerd。</p>
+        <p>• <strong>不是二选一</strong>：Docker 管「一个容器」，K8s 管「一堆容器」；Docker Desktop 自带的本地 K8s 就是两者一起用的典型。</p>
+        <p>• <strong>一句话记住</strong>：Docker 是把货装进集装箱的装货工，K8s 是决定箱子放哪条船、哪个泊位的码头调度中心。</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <p class="footer">
+      Kubernetes 入门图解 • servers/k8s/k8s.html • 搭配 k8s.md 一起看
+    </p>
+  </div>
+
+  <script>
+    async function copyAsImage(btn) {
+      const orig = btn.textContent;
+      try {
+        const el = document.getElementById('report-container');
+        const r = el.getBoundingClientRect();
+        const pad = 32;
+        const canvas = await html2canvas(document.body, { backgroundColor: '#020617', scale: 2, useCORS: true, ignoreElements: (e) => e.classList && e.classList.contains('toolbar'), x: r.left + window.scrollX - pad, y: r.top + window.scrollY - pad, width: r.width + pad * 2, height: r.height + pad * 2 });
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        btn.textContent = '✓ Copied!';
+      } catch (e) {
+        btn.textContent = '✗ Failed';
+      }
+      setTimeout(() => btn.textContent = orig, 2000);
+    }
+
+    async function downloadPNG(btn) {
+      const orig = btn.textContent;
+      btn.textContent = '⏳ ...';
+      try {
+        const el = document.getElementById('report-container');
+        const r = el.getBoundingClientRect();
+        const pad = 32;
+        const canvas = await html2canvas(document.body, { backgroundColor: '#020617', scale: 2, useCORS: true, ignoreElements: (e) => e.classList && e.classList.contains('toolbar'), x: r.left + window.scrollX - pad, y: r.top + window.scrollY - pad, width: r.width + pad * 2, height: r.height + pad * 2 });
+        const link = document.createElement('a');
+        link.download = 'diagram.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        btn.textContent = '✓ Done!';
+      } catch (e) {
+        btn.textContent = '✗ Failed';
+      }
+      setTimeout(() => btn.textContent = orig, 2000);
+    }
+
+    async function downloadPDF(btn) {
+      const orig = btn.textContent;
+      btn.textContent = '⏳ ...';
+      try {
+        const el = document.getElementById('report-container');
+        const r = el.getBoundingClientRect();
+        const pad = 32;
+        const canvas = await html2canvas(document.body, { backgroundColor: '#020617', scale: 2, useCORS: true, ignoreElements: (e) => e.classList && e.classList.contains('toolbar'), x: r.left + window.scrollX - pad, y: r.top + window.scrollY - pad, width: r.width + pad * 2, height: r.height + pad * 2 });
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const orientation = canvas.width > canvas.height ? 'landscape' : 'portrait';
+        const pdf = new jsPDF({ orientation, unit: 'px', format: [canvas.width, canvas.height], hotfixes: ['px_scaling'] });
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save('diagram.pdf');
+        btn.textContent = '✓ Done!';
+      } catch (e) {
+        btn.textContent = '✗ Failed';
+      }
+      setTimeout(() => btn.textContent = orig, 2000);
+    }
+  </script>
+</body>
+</html>
