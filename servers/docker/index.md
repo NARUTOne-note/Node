@@ -110,6 +110,9 @@ docker run -it ubuntu /bin/bash
 # 进入容器内部
 docker exec -it <容器ID/name> /bin/bash
 
+# 启动一个一次性交互式容器，并覆盖镜像默认的入口程序，改为执行你指定的命令
+docker run -it --rm --entrypoint <入口程序> <镜像名> [参数...]
+
 # 推出容器
 exit
 
@@ -162,9 +165,11 @@ docker exec -it some-mysql mysql -u root -p
 
 常用选项说明:
 
-`-d`：后台运行容器，例如 docker run -d ubuntu。
-`-it`：以交互式终端运行容器，例如 docker exec -it container_name bash。
-`-t`：为镜像指定标签，例如 docker build -t my-image .。
+- `-d`：后台运行容器，例如 docker run -d ubuntu。
+- `-it`：以交互式终端运行容器，例如 docker exec -it container_name bash。
+- `-t`：为镜像指定标签，例如 docker build -t my-image .。
+- `--rm`: 容器退出后自动删除该容器。
+- `--entrypoint`: 覆盖镜像 Dockerfile 中定义的 ENTRYPOINT。--entrypoint 后面必须跟一个可执行程序，例如 /bin/bash、sh、cat
 
 ### 构建镜像
 
