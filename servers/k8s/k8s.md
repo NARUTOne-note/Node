@@ -156,6 +156,176 @@ kubectl port-forward svc/web 8080:80
 - **进容器排查网络/配置**：`kubectl exec -it <pod> -- sh`，进去用 `curl`、`env`、`cat` 检查。
 - **存放配置和密码**：配置用 ConfigMap、密码用 Secret 挂进 Pod，不要把配置硬写进镜像。
 
+## 网络策略 NetworkPolicy
+
+Pod 级别的防火墙，用来控制哪些 Pod/命名空间/IP 可以访问哪些 Pod 的哪些端口。
+
+默认情况下，K8s 集群的网络是**「大通铺」**：同一个集群里，任何 Pod 都能访问任何 Pod，不需要开口子。这在多团队、多环境的集群里很危险 —— 一个被入侵的 Pod 能直接摸到数据库。NetworkPolicy 就是给 Pod 门口装一扇门 + 一张名单：名单上的人能进，其余一律挡在外面。
+
+### 一句话理解核心规则
+
+**没被任何 NetworkPolicy 选中的 Pod，默认「全通」；一旦被选中，在规则指定的方向上就变成「默认拒绝」，只有名单里的才放行。**
+
+这是最容易踩的坑：策略不是「叠加白名单」，而是「选中即上锁，规则即钥匙」。
+
+- **选中即上锁** —— 一个 Pod 只要被任意一条 NetworkPolicy 的 `podSelector` 命中，它在 `policyTypes` 列出的方向（Ingress / Egress）上立刻变成「先拒绝、再按规则放行」。
+- **规则取并集** —— 多个策略同时选中同一个 Pod，只要**任意一条**放行，流量就通，不会互相覆盖。
+- **策略有命名空间** —— NetworkPolicy 是 namespaced 资源，只对**所在命名空间**里、且被它选中的 Pod 生效。
+
+> 类比：默认是「谁都能敲你家门」；装了 NetworkPolicy 之后，只有名单上的人按得响门铃，其他人连门都不存在。
+
+### 前提：CNI 得支持
+
+NetworkPolicy 只是「规则」，真正拦流量的是节点上的网络插件（CNI）。**CNI 不支持的话，YAML 能创建成功但完全不生效**，这是排查时最容易忽略的点。
+
+| CNI | 是否支持 NetworkPolicy |
+|-----|----------------------|
+| Calico | ✅ 支持（最常用，功能全） |
+| Cilium | ✅ 支持（基于 eBPF，性能好） |
+| Weave Net | ✅ 支持 |
+| flannel | ❌ 默认**不支持**（多数发行版默认装的就是它） |
+
+本地用 minikube 练手时要显式指定：
+
+```bash
+minikube start --cni=calico    # flannel 不支持，练 NetworkPolicy 必须换
+```
+
+### 字段速览
+
+| 字段 | 作用 |
+|------|------|
+| `podSelector` | **选谁**。被筛选中的 Pod 是这条策略的「保护对象」；空 `{}` 表示本命名空间全部 Pod |
+| `policyTypes` | 管哪个方向：`Ingress`（进来的）/ `Egress`（出去的） |
+| `ingress.from` | 允许**谁**进来：三种选择器二选一或组合（见下） |
+| `egress.to` | 允许**去哪里**：同上三种选择器 |
+| `ports` | 只放行哪些端口，不写表示全端口 |
+
+三种「谁」的写法（`from` / `to` 通用）：
+
+| 选择器 | 含义 | 示例 |
+|--------|------|------|
+| `podSelector` | 按标签选 Pod（默认限本命名空间） | `matchLabels: {app: web}` |
+| `namespaceSelector` | 按标签选命名空间 | `matchLabels: {env: prod}` |
+| `ipBlock` | 按 IP 段放行（集群外的地址） | `cidr: 10.0.0.0/8`，可配 `except` 排除 |
+
+> 注意：`podSelector` 和 `namespaceSelector` 写在**同一个 `from` 项里**表示「且」（该命名空间里、带该标签的 Pod）；拆成**两个 `from` 项**表示「或」（都放行）。这是极易写错的地方。
+
+### 常用示例
+
+**① 默认拒绝所有入站**（最常先打的地基，上锁后再开洞）
+
+```yaml
+# default-deny-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: prod
+spec:
+  podSelector: {}          # 空 = 选中本命名空间的所有 Pod
+  policyTypes:
+    - Ingress              # 只锁入站；出站不受影响
+```
+
+**② 只允许同应用的 Pod 互相访问**：
+
+```yaml
+# allow-same-app.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-same-app
+spec:
+  podSelector:
+    matchLabels:
+      app: web            # 保护对象：带 app=web 的 Pod
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: web    # 放行：本命名空间里同样带 app=web 的 Pod
+```
+
+**③ 放行某个命名空间访问指定端口**（数据库只给 prod 开）
+
+```yaml
+spec:
+  podSelector:
+    matchLabels:
+      app: mysql
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: prod   # 内置标签，值就是命名空间名
+      ports:
+        - protocol: TCP
+          port: 3306          # 只开 3306，别的端口照拒
+```
+
+**④ 放行集群外的固定网段**：
+
+```yaml
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 10.0.0.0/8
+            except:
+              - 10.0.1.0/24   # 大段里再挖掉一段（比如办公网）
+```
+
+**⑤ 限制出站**（防止被入侵的 Pod 往外传数据）
+
+```yaml
+spec:
+  podSelector:
+    matchLabels:
+      app: web
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: db
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:                     # ⚠️ 锁了出站，一定要给 DNS 留口子
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+```
+
+> **锁 Egress 必踩的坑**：DNS 请求也是出站流量。一旦限制出站却忘了放行 `kube-system` 里的 CoreDNS（53 端口），Pod 里所有域名解析都会失败，表现是「连不上 service 名」，很容易误以为策略写错了。
+
+### 常用命令
+
+| 命令 | 作用 |
+|------|------|
+| `kubectl get netpol -n <ns>` | 列出命名空间里的策略 |
+| `kubectl describe netpol <名> -n <ns>` | 看某条策略具体选中的 Pod 和规则 |
+| `kubectl get pods --show-labels` | 对齐标签，确认策略选中了谁 |
+
+### 排查思路
+
+连不上时，按「是不是策略挡的」从外到内查：
+
+1. `kubectl get netpol -n <ns>` —— 这个命名空间到底有没有策略？**没有就一定是别的问题**。
+2. `kubectl describe netpol <名>` —— 看它选中了哪些 Pod、放行了哪些来源/端口，和你实际的访问方对不上就是它。
+3. 临时删掉策略验证：`kubectl delete netpol <名>`，如果立刻通了，说明就是策略拦的，回去补规则。
+4. 别忘了 DNS —— 出站被限、`kube-system:53` 没放行，是「名字都解析不了」的经典原因。
+
+**一句话记忆：NetworkPolicy 不是「加白名单」，而是「选中即上锁」。** 先写一条 `podSelector: {}` 的 default-deny 兜底，再逐条开洞，是最稳的用法。
+
 ## 小结
 
 - K8s 的价值是**帮你维持一个「你期望的状态」**：你负责声明，它负责达成和修复。
