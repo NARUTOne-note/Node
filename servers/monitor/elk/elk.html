@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ELK Stack 介绍 · 日志分析三件套</title>
+  <title>ELK Stack 介绍 · 日志分析三件套 · 从看懂到上手</title>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" integrity="sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/" crossorigin="anonymous"></script>
@@ -22,6 +22,8 @@
     .pulse-dot { width: 12px; height: 12px; background: #22d3ee; border-radius: 50%; animation: pulse 2s infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; }
+    h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; margin: 2.5rem 0 1rem; display: flex; align-items: center; gap: 0.6rem; }
+    h2 .num { color: #22d3ee; font-size: 0.85rem; background: rgba(8,51,68,0.6); padding: 2px 8px; border-radius: 6px; }
     .subtitle { color: #94a3b8; font-size: 0.875rem; margin-left: 1.75rem; max-width: 90ch; }
     .lead { color: #cbd5e1; font-size: 0.9rem; margin: 1rem 0 0 1.75rem; line-height: 1.6; }
     .diagram-container {
@@ -56,7 +58,32 @@
     .card ul { list-style: none; color: #94a3b8; font-size: 0.75rem; }
     .card li { margin-bottom: 0.375rem; line-height: 1.5; }
     .card code { color: #22d3ee; font-size: 0.72rem; background: rgba(8,51,68,0.5); padding: 1px 4px; border-radius: 3px; }
-    .footer { text-align: center; margin-top: 1.5rem; color: #475569; font-size: 0.75rem; }
+    /* code block */
+    .code-block {
+      background: #0b1120;
+      border: 1px solid #1e293b;
+      border-radius: 0.75rem;
+      margin: 1rem 0;
+      overflow: hidden;
+    }
+    .code-tab { background: rgba(30,41,59,0.6); color: #94a3b8; font-size: 0.72rem; padding: 0.4rem 1rem; border-bottom: 1px solid #1e293b; display: flex; align-items: center; gap: 0.5rem; }
+    .code-tab .dot { width: 8px; height: 8px; border-radius: 50%; }
+    pre { padding: 1rem 1.25rem; overflow-x: auto; font-size: 0.78rem; line-height: 1.7; color: #e2e8f0; }
+    pre .c { color: #64748b; }       /* comment */
+    pre .k { color: #f472b6; }       /* keyword */
+    pre .s { color: #34d399; }       /* string */
+    pre .n { color: #fbbf24; }       /* number */
+    pre .p { color: #22d3ee; }        /* property/key */
+    /* steps */
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-top: 1.25rem; }
+    .step { background: rgba(15,23,42,0.5); border: 1px solid #1e293b; border-radius: 0.75rem; padding: 1.1rem; }
+    .step-no { display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border-radius: 50%; background: rgba(8,51,68,0.7); color: #22d3ee; font-size: 0.75rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .step h4 { font-size: 0.85rem; margin-bottom: 0.4rem; }
+    .step p { color: #94a3b8; font-size: 0.75rem; line-height: 1.6; }
+    .step code { color: #34d399; font-size: 0.72rem; background: rgba(6,78,59,0.4); padding: 1px 4px; border-radius: 3px; }
+    .callout { background: rgba(8,51,68,0.35); border-left: 3px solid #22d3ee; border-radius: 0.5rem; padding: 0.9rem 1.1rem; margin: 1rem 0; color: #cbd5e1; font-size: 0.8rem; line-height: 1.65; }
+    .callout b { color: #22d3ee; }
+    .footer { text-align: center; margin-top: 2rem; color: #475569; font-size: 0.75rem; }
     .toolbar { display: flex; gap: 0.5rem; margin-left: auto; flex-shrink: 0; align-items: center; }
     .toolbar-toggle { background: transparent; border: none; color: #475569; cursor: pointer; font-size: 1.25rem; line-height: 1; padding: 0.25rem 0.5rem; border-radius: 0.375rem; transition: color 0.2s, background 0.2s; }
     .toolbar-toggle:hover { color: #94a3b8; background: rgba(30, 41, 59, 0.5); }
@@ -106,16 +133,12 @@
         <!-- Background Grid -->
         <rect width="100%" height="100%" fill="url(#grid)" />
 
-        <!-- ====== ARROWS (drawn first so boxes overlay them) ====== -->
-        <!-- Sources -> Beats -> Logstash -->
+        <!-- ====== ARROWS ====== -->
         <line x1="210" y1="260" x2="298" y2="260" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <!-- Logstash -> Elasticsearch -->
         <line x1="450" y1="260" x2="548" y2="260" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <text x="499" y="253" fill="#94a3b8" font-size="9" text-anchor="middle">清洗后</text>
-        <!-- Elasticsearch -> Kibana -->
         <line x1="720" y1="260" x2="818" y2="260" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <text x="769" y="253" fill="#94a3b8" font-size="9" text-anchor="middle">索引/查询</text>
-        <!-- Kibana -> User (vertical) -->
         <line x1="895" y1="372" x2="895" y2="408" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <text x="905" y="394" fill="#94a3b8" font-size="9">浏览</text>
 
@@ -123,7 +146,7 @@
         <rect x="60" y="80" width="880" height="430" rx="12" fill="rgba(251, 191, 36, 0.05)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="8,4"/>
         <text x="72" y="100" fill="#fbbf24" font-size="10" font-weight="600">ELK Stack · 日志分析全家桶</text>
 
-        <!-- ====== STAGE A: 数据源 Sources ====== -->
+        <!-- ====== STAGE A: 数据源 ====== -->
         <rect x="80" y="150" width="130" height="220" rx="8" fill="#0f172a"/>
         <rect x="80" y="150" width="130" height="220" rx="8" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
         <text x="145" y="174" fill="white" font-size="12" font-weight="600" text-anchor="middle">数据源</text>
@@ -136,7 +159,7 @@
         <text x="145" y="340" fill="#94a3b8" font-size="7" text-anchor="middle">散落在各服务器上</text>
         <text x="145" y="352" fill="#94a3b8" font-size="7" text-anchor="middle">又多又乱、难直接查</text>
 
-        <!-- ====== Beats (lightweight shippers, on the arrow gap) ====== -->
+        <!-- ====== Beats ====== -->
         <rect x="218" y="244" width="78" height="32" rx="4" fill="rgba(251, 146, 60, 0.3)" stroke="#fb923c" stroke-width="1"/>
         <text x="257" y="258" fill="#fb923c" font-size="8" font-weight="600" text-anchor="middle">Beats</text>
         <text x="257" y="270" fill="#fb923c" font-size="6" text-anchor="middle">轻量采集器</text>
@@ -146,7 +169,6 @@
         <rect x="300" y="150" width="150" height="220" rx="8" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
         <text x="375" y="174" fill="white" font-size="12" font-weight="600" text-anchor="middle">Logstash</text>
         <text x="375" y="189" fill="#34d399" font-size="9" text-anchor="middle">收集 · 清洗 · 转发</text>
-        <!-- pipeline: input -> filter -> output -->
         <rect x="320" y="208" width="110" height="40" rx="4" fill="rgba(6,78,59,0.25)" stroke="#34d399" stroke-width="0.8"/>
         <text x="375" y="224" fill="white" font-size="9" text-anchor="middle">Input 输入</text>
         <text x="375" y="238" fill="#94a3b8" font-size="7" text-anchor="middle">接收各路日志</text>
@@ -163,10 +185,8 @@
         <rect x="550" y="150" width="170" height="220" rx="8" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
         <text x="635" y="174" fill="white" font-size="12" font-weight="600" text-anchor="middle">Elasticsearch</text>
         <text x="635" y="189" fill="#a78bfa" font-size="9" text-anchor="middle">存储 · 全文搜索</text>
-        <!-- cluster ring -->
         <rect x="566" y="206" width="138" height="130" rx="6" fill="transparent" stroke="#a78bfa" stroke-width="0.8" stroke-dasharray="4,4"/>
         <text x="635" y="221" fill="#a78bfa" font-size="7" text-anchor="middle">集群 Cluster</text>
-        <!-- nodes -->
         <rect x="582" y="232" width="106" height="28" rx="4" fill="rgba(76,29,149,0.25)" stroke="#a78bfa" stroke-width="1"/>
         <text x="635" y="250" fill="white" font-size="9" text-anchor="middle">Node 1 · 主</text>
         <rect x="582" y="266" width="106" height="28" rx="4" fill="rgba(76,29,149,0.25)" stroke="#a78bfa" stroke-width="1"/>
@@ -181,13 +201,11 @@
         <rect x="820" y="150" width="150" height="220" rx="8" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
         <text x="895" y="174" fill="white" font-size="12" font-weight="600" text-anchor="middle">Kibana</text>
         <text x="895" y="189" fill="#22d3ee" font-size="9" text-anchor="middle">可视化 · 仪表盘</text>
-        <!-- mini bar chart -->
         <line x1="842" y1="265" x2="948" y2="265" stroke="#22d3ee" stroke-width="0.6" opacity="0.5"/>
         <rect x="850" y="235" width="16" height="30" fill="#22d3ee" opacity="0.7"/>
         <rect x="872" y="245" width="16" height="20" fill="#22d3ee" opacity="0.7"/>
         <rect x="894" y="222" width="16" height="43" fill="#22d3ee" opacity="0.7"/>
         <rect x="916" y="250" width="16" height="15" fill="#22d3ee" opacity="0.7"/>
-        <!-- dashboard rows -->
         <rect x="842" y="278" width="106" height="24" rx="3" fill="rgba(8,51,68,0.25)" stroke="#22d3ee" stroke-width="0.6"/>
         <text x="895" y="294" fill="white" font-size="8" text-anchor="middle">Dashboard 仪表盘</text>
         <rect x="842" y="308" width="106" height="24" rx="3" fill="rgba(8,51,68,0.25)" stroke="#22d3ee" stroke-width="0.6"/>
@@ -195,35 +213,29 @@
         <rect x="842" y="338" width="106" height="24" rx="3" fill="rgba(8,51,68,0.25)" stroke="#22d3ee" stroke-width="0.6"/>
         <text x="895" y="354" fill="white" font-size="8" text-anchor="middle">Alerts 告警</text>
 
-        <!-- ====== USER (outside region top? inside below Kibana) ====== -->
+        <!-- ====== USER ====== -->
         <rect x="835" y="410" width="120" height="48" rx="6" fill="rgba(136, 19, 55, 0.4)" stroke="#fb7185" stroke-width="1.5"/>
         <text x="895" y="432" fill="white" font-size="11" font-weight="600" text-anchor="middle">用户 / 运维</text>
         <text x="895" y="447" fill="#94a3b8" font-size="9" text-anchor="middle">浏览器查看</text>
 
-        <!-- ====== LEGEND (below region) ====== -->
+        <!-- ====== LEGEND ====== -->
         <text x="60" y="540" fill="white" font-size="10" font-weight="600">图例</text>
-
         <rect x="60" y="552" width="16" height="10" rx="2" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1"/>
         <text x="82" y="561" fill="#94a3b8" font-size="8">数据源</text>
-
         <rect x="150" y="552" width="16" height="10" rx="2" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1"/>
         <text x="172" y="561" fill="#94a3b8" font-size="8">Logstash 处理</text>
-
         <rect x="270" y="552" width="16" height="10" rx="2" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1"/>
         <text x="292" y="561" fill="#94a3b8" font-size="8">Elasticsearch 存储</text>
-
         <rect x="410" y="552" width="16" height="10" rx="2" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1"/>
         <text x="432" y="561" fill="#94a3b8" font-size="8">Kibana 可视化</text>
-
         <rect x="540" y="552" width="16" height="10" rx="2" fill="rgba(251, 146, 60, 0.3)" stroke="#fb923c" stroke-width="1"/>
         <text x="562" y="561" fill="#94a3b8" font-size="8">Beats 轻量采集</text>
-
         <rect x="670" y="552" width="16" height="10" rx="2" fill="rgba(136, 19, 55, 0.4)" stroke="#fb7185" stroke-width="1"/>
         <text x="692" y="561" fill="#94a3b8" font-size="8">用户 / 运维</text>
       </svg>
     </div>
 
-    <!-- Info Cards -->
+    <!-- Info Cards: 是什么 / 怎么工作 / 为什么用 -->
     <div class="cards">
       <div class="card">
         <div class="card-header">
@@ -268,9 +280,239 @@
       </div>
     </div>
 
+    <!-- ============ 如何使用 ============ -->
+    <h2><span class="num">PART 1</span> 如何使用 · 五分钟跑起来</h2>
+    <p class="lead" style="margin-left:0;">最快的方式：用 <b>docker-compose</b> 一键起一套 ELK。下面这份文件同时拉起 Elasticsearch + Kibana（学习足够，生产再补 Logstash/Beats）。</p>
+
+    <div class="code-block">
+      <div class="code-tab"><span class="dot" style="background:#34d399"></span> docker-compose.yml</div>
+<pre><span class="c"># 一键启动 ELK（学习版：ES + Kibana）</span>
+<span class="k">services</span>:
+  <span class="p">elasticsearch</span>:
+    <span class="p">image</span>: docker.elastic.co/elasticsearch/elasticsearch:<span class="s">8.13.0</span>
+    <span class="p">environment</span>:
+      - <span class="p">discovery.type</span>=<span class="s">single-node</span>      <span class="c"># 单机模式，免集群</span>
+      - <span class="p">xpack.security.enabled</span>=<span class="s">false</span>     <span class="c"># 学习关掉安全</span>
+      - <span class="p">ES_JAVA_OPTS</span>=<span class="s">-Xms512m -Xmx512m</span>     <span class="c"># 控内存</span>
+    <span class="p">ports</span>: [<span class="s">"9200:9200"</span>]
+
+  <span class="p">kibana</span>:
+    <span class="p">image</span>: docker.elastic.co/kibana/kibana:<span class="s">8.13.0</span>
+    <span class="p">ports</span>: [<span class="s">"5601:5601"</span>]
+    <span class="p">environment</span>:
+      - <span class="p">ELASTICSEARCH_HOSTS</span>=<span class="s">http://elasticsearch:9200</span>
+    <span class="p">depends_on</span>: [<span class="s">elasticsearch</span>]</pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-tab"><span class="dot" style="background:#22d3ee"></span> 终端命令</div>
+<pre><span class="c"># 1. 启动</span>
+docker compose up -d
+
+<span class="c"># 2. 等 30 秒，确认 ES 起来了（看到 "You Know, for Search"）</span>
+curl http://localhost:9200
+
+<span class="c"># 3. 打开浏览器访问 Kibana</span>
+<span class="s">http://localhost:5601</span></pre>
+    </div>
+
+    <div class="callout">
+      💡 <b>端口速记</b>：ES = <code>9200</code>（存数据、接查询），Kibana = <code>5601</code>（你看的网页）。Logstash = <code>5044</code>（接 Beats 的口）。记住这三个，排查问题不慌。
+    </div>
+
+    <!-- ============ 往里塞数据 ============ -->
+    <h2><span class="num">PART 2</span> 怎么往里塞一条日志</h2>
+    <p class="lead" style="margin-left:0;">ES 把每条数据叫一个<b>文档 document</b>，同类文档放一起叫一个<b>索引 index</b>（相当于数据库的表）。塞数据就是往 ES 发一条 HTTP POST。</p>
+
+    <div class="code-block">
+      <div class="code-tab"><span class="dot" style="background:#a78bfa"></span> 用 curl 写一条日志进 ES</div>
+<pre>curl -X POST <span class="s">"http://localhost:9200/app-logs/_doc"</span> -H <span class="s">"Content-Type: application/json"</span> -d '
+{
+  <span class="p">"time"</span>:   <span class="s">"2026-10-15T10:30:00Z"</span>,
+  <span class="p">"level"</span>: <span class="s">"ERROR"</span>,
+  <span class="p">"service"</span>: <span class="s">"order-service"</span>,
+  <span class="p">"msg"</span>:   <span class="s">"支付超时，订单 #8821"</span>
+}'
+
+<span class="c"># 返回 {"_index":"app-logs", "_id":"abc123", "result":"created"}</span>
+<span class="c"># 说明一条日志已经存进 app-logs 索引了</span></pre>
+    </div>
+
+    <div class="callout">
+      📚 <b>类比数据库</b>：索引 index ≈ 表，文档 document ≈ 表里一行，字段 field ≈ 列。区别是 ES 每个字段都建了倒排索引，所以全文搜索飞快。
+    </div>
+
+    <!-- ============ Kibana 三步走 ============ -->
+    <h2><span class="num">PART 3</span> Kibana 界面三步走</h2>
+    <p class="lead" style="margin-left:0;">打开 Kibana 网页后，95% 的日常就这三件事：</p>
+
+    <div class="steps">
+      <div class="step">
+        <span class="step-no">1</span>
+        <h4>🔍 Discover · 搜日志</h4>
+        <p>左侧菜单 <code>Discover</code>。选一个索引（如 <code>app-logs</code>），上面输入框写查询条件，下面按时间倒序看每条日志原文。排查"某条报错是什么时候、哪台机器"就在这。</p>
+      </div>
+      <div class="step">
+        <span class="step-no">2</span>
+        <h4>📊 Dashboard · 看图表</h4>
+        <p>左侧 <code>Dashboard</code>。把搜索结果画成柱状图、饼图、折线图，拖拽组合成一个大屏。比如"每天 ERROR 数趋势""各服务错误占比"，一眼看出哪里出问题。</p>
+      </div>
+      <div class="step">
+        <span class="step-no">3</span>
+        <h4>🚨 Alerts · 配告警</h4>
+        <p>左侧 <code>Alerts</code>。设规则："ERROR 次数 &gt; 100 就发飞书/钉钉"。不用写定时脚本，ES 自己盯着数据，触发就通知你。</p>
+      </div>
+    </div>
+
+    <!-- ============ 查询语法 ============ -->
+    <h2><span class="num">PART 4</span> 怎么搜 · KQL 查询语法</h2>
+    <p class="lead" style="margin-left:0;">Kibana 搜索框里用的是 <b>KQL</b>（Kibana Query Language），语法很接近自然语言。下面从简到难：</p>
+
+    <div class="code-block">
+      <div class="code-tab"><span class="dot" style="background:#22d3ee"></span> KQL · 由浅入深</div>
+<pre><span class="c">-- 1. 全文搜：含"支付"的日志</span>
+<span class="s">支付</span>
+
+<span class="c">-- 2. 字段搜：level 是 ERROR 的</span>
+<span class="p">level</span>: <span class="s">ERROR</span>
+
+<span class="c">-- 3. 多条件 AND / OR</span>
+<span class="p">level</span>: <span class="s">ERROR</span> <span class="k">AND</span> <span class="p">service</span>: <span class="s">"order-service"</span>
+
+<span class="c">-- 4. 范围：响应时间大于 1000ms</span>
+<span class="p">duration</span> &gt; <span class="n">1000</span>
+
+<span class="c">-- 5. 通配符：所有 service 以 order 开头</span>
+<span class="p">service</span>: <span class="s">order*</span>
+
+<span class="c">-- 6. 取反 NOT</span>
+<span class="k">NOT</span> <span class="p">level</span>: <span class="s">INFO</span></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-tab"><span class="dot" style="background:#a78bfa"></span> 对应的 REST API（程序里调用）</div>
+<pre><span class="c"># 用 _search 端点查询，body 是 Query DSL（JSON）</span>
+curl -X GET <span class="s">"http://localhost:9200/app-logs/_search"</span> -H <span class="s">"Content-Type: application/json"</span> -d '
+{
+  <span class="p">"query"</span>: {
+    <span class="p">"bool"</span>: {
+      <span class="p">"must</span>": [
+        { <span class="p">"match</span>": { <span class="p">"level</span>":  <span class="s">"ERROR"</span> } },
+        { <span class="p">"match</span>": { <span class="p">"service</span>": <span class="s">"order-service"</span> } }
+      ]
+    }
+  },
+  <span class="p">"size</span>": <span class="n">20</span>
+}'</pre>
+    </div>
+
+    <div class="callout">
+      🔑 <b>一句话区分</b>：<b>KQL</b> 是给人在 Kibana 搜索框敲的（简写好记）；<b>Query DSL</b> 是给程序发 HTTP 请求用的（JSON 完整）。结果一样，看你顺手。
+    </div>
+
+    <!-- ============ 完整采集链路 ============ -->
+    <h2><span class="num">PART 5</span> 接上真实日志 · Logstash + Beats</h2>
+    <p class="lead" style="margin-left:0;">前面是手动塞数据。真实场景：应用日志写在文件里，要让它<b>自动流</b>进 ES。加两块拼图：</p>
+
+    <div class="code-block">
+      <div class="code-tab"><span class="dot" style="background:#fb923c"></span> Filebeat（装在应用服务器，读日志文件）</div>
+<pre><span class="c"># filebeat.yml —— 盯着日志文件，往 Logstash 推</span>
+<span class="p">filebeat.inputs</span>:
+- <span class="p">type</span>: <span class="s">log</span>
+  <span class="p">paths</span>:
+    - <span class="s">/var/log/myapp/*.log</span>     <span class="c"># 要采集的日志路径</span>
+
+<span class="p">output.logstash</span>:
+  <span class="p">hosts</span>: [<span class="s">"logstash:5044"</span>]      <span class="c"># 推给 Logstash 清洗</span></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-tab"><span class="dot" style="background:#34d399"></span> Logstash（清洗管道，再写进 ES）</div>
+<pre><span class="c"># logstash.conf —— 三段式：输入 → 过滤 → 输出</span>
+<span class="k">input</span> {
+  <span class="p">beats</span> { <span class="p">port</span> =&gt; <span class="n">5044</span> }              <span class="c"># 接 Filebeat</span>
+}
+
+<span class="k">filter</span> {
+  <span class="p">grok</span> {
+    <span class="p">match</span> =&gt; { <span class="s">"message"</span> =&gt; <span class="s">"%{TIMESTAMP_ISO8601:time} %{LOGLEVEL:level} %{GREEDYDATA:msg}"</span> }
+    <span class="c"># 把一行文本日志拆成 time / level / msg 三个字段</span>
+  }
+}
+
+<span class="k">output</span> {
+  <span class="p">elasticsearch</span> {
+    <span class="p">hosts</span> =&gt; [<span class="s">"elasticsearch:9200"</span>]
+    <span class="p">index</span> =&gt; <span class="s">"app-logs"</span>            <span class="c"># 写进哪个索引</span>
+  }
+}</pre>
+    </div>
+
+    <div class="callout">
+      🌊 <b>完整数据流</b>：应用写文件 → <code>Filebeat</code> 读文件 → <code>Logstash</code> 拆字段清洗 → <code>Elasticsearch</code> 存索引 → <code>Kibana</code> 搜/画/告警。一行配置串起来，日志全自动进来。
+    </div>
+
+    <!-- ============ 常用命令 ============ -->
+    <h2><span class="num">PART 6</span> 日常运维 · 常用命令</h2>
+
+    <div class="code-block">
+      <div class="code-tab"><span class="dot" style="background:#94a3b8"></span> ES 状态检查与索引管理</div>
+<pre><span class="c"># 集群健康（green / yellow / red）</span>
+curl localhost:9200/_cluster/health
+
+<span class="c"># 列出所有索引（看存了哪些"表"）</span>
+curl localhost:9200/_cat/indices?v
+
+<span class="c"># 看某索引的文档总数</span>
+curl localhost:9200/app-logs/_count
+
+<span class="c"># 按 ID 取一条</span>
+curl localhost:9200/app-logs/_doc/abc123
+
+<span class="c"># 删一个索引（慎用，数据会没）</span>
+curl -X DELETE localhost:9200/app-logs</pre>
+    </div>
+
+    <!-- ============ 关键概念 ============ -->
+    <h2><span class="num">PART 7</span> 关键概念速查</h2>
+    <div class="cards">
+      <div class="card">
+        <div class="card-header"><div class="card-dot violet"></div><h3>Elasticsearch 核心词</h3></div>
+        <ul>
+          <li>• <code>文档 document</code>：一条数据，JSON</li>
+          <li>• <code>索引 index</code>：文档集合，≈ 表</li>
+          <li>• <code>分片 shard</code>：索引切块，分到多台</li>
+          <li>• <code>副本 replica</code>：分片的备份</li>
+          <li>• <code>倒排索引</code>：搜得快的核心</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-dot emerald"></div><h3>Logstash 三段</h3></div>
+        <ul>
+          <li>• <code>input</code>：从哪收（file/beats）</li>
+          <li>• <code>filter</code>：怎么洗（grok 拆字段）</li>
+          <li>• <code>output</code>：送到哪（→ ES）</li>
+          <li>• 每条日志流过这三段</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-dot cyan"></div><h3>Kibana 三件</h3></div>
+        <ul>
+          <li>• <code>Discover</code>：搜日志原文</li>
+          <li>• <code>Dashboard</code>：组合图表大屏</li>
+          <li>• <code>Alerts</code>：规则触发告警</li>
+          <li>• <code>Dev Tools</code>：调试 DSL 控制台</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout" style="border-left-color:#fbbf24;background:rgba(251,191,36,0.08);">
+      ⚠️ <b>生产注意</b>：① 开启 <code>xpack.security</code>，设密码；② ES 是吃内存大户，JVM 堆别超物理内存 50%、别超 31GB；③ 用 <code>ILM</code> 策略自动老化/删除旧索引，否则磁盘会爆；④ 重要索引配分片+副本，防节点挂掉丢数据。
+    </div>
+
     <!-- Footer -->
     <p class="footer">
-      ELK Stack · Elasticsearch + Logstash + Kibana + Beats · 日志分析入门图解
+      ELK Stack · Elasticsearch + Logstash + Kibana + Beats · 日志分析入门图解 · 从看懂到上手
     </p>
   </div>
 
