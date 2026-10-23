@@ -52,7 +52,7 @@
 - info - 显示 Docker 的系统级信息，包括当前的镜像和容器数量。
 - version - 显示 Docker 客户端和服务端的版本信息。
 
-##  Docker Compose
+## Docker Compose
 
 - docker compose run - 启动一个新容器并运行一个特定的应用程序。
 - docker compose rm - 启动一个新容器并删除一个特定的应用程序。
@@ -66,16 +66,16 @@
 ## 网络命令
 
 - docker network ls: 列出所有网络。
-- docker network create <network>: 创建一个新的网络。
-- docker network rm <network>: 删除指定的网络。
-- docker network connect <network> <container>: 连接容器到网络。
-- docker network disconnect <network> <container>: 断开容器与网络的连接。
+- `docker network create <network>`: 创建一个新的网络。
+- `docker network rm <network>`: 删除指定的网络。
+- `docker network connect <network> <container>`: 连接容器到网络。
+- `docker network disconnect <network> <container>`: 断开容器与网络的连接。
 
 详细内容查看：docker network 命令
 
 ## 卷命令
 
 - docker volume ls: 列出所有卷。
-- docker volume create <volume>: 创建一个新的卷。
-- docker volume rm <volume>: 删除指定的卷。
-- docker volume inspect <volume>: 显示卷的详细信息。
+- `docker volume create <volume>`: 创建一个新的卷。
+- `docker volume rm <volume>`: 删除指定的卷。
+- `docker volume inspect <volume>`: 显示卷的详细信息。
