@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IP、MAC 和虚拟地址 · 极简讲解</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+    .container { max-width: 860px; margin: 0 auto; }
+    header { margin-bottom: 2rem; padding: 0 .5rem; }
+    h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.3; }
+    .subtitle { color: #64748b; margin-top: 0.6rem; font-size: 1.05rem; }
+    .section {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .section h2 { font-size: 1.25rem; margin-bottom: 1rem; }
+    .section h3 { font-size: 1rem; margin: 1.25rem 0 .5rem; }
+    .section p { color: #334155; margin-bottom: .75rem; }
+    .section p:last-child { margin-bottom: 0; }
+    svg { width: 100%; height: auto; display: block; }
+    .figure { margin-bottom: .5rem; }
+    .figure + p { margin-top: .75rem; }
+    ul.clean { list-style: none; margin: .5rem 0; }
+    ul.clean li {
+      position: relative;
+      padding-left: 1.1rem;
+      margin-bottom: .45rem;
+      color: #334155;
+      font-size: .95rem;
+    }
+    ul.clean li::before {
+      content: "";
+      position: absolute;
+      left: 0; top: .62em;
+      width: .45rem; height: .45rem;
+      border-radius: 50%;
+      background: #0284c7;
+      opacity: .6;
+    }
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-top: .5rem;
+    }
+    .step-card {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.75rem;
+      padding: 1rem;
+    }
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 50%;
+      background: #0284c7;
+      color: #fff;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      font-size: .9rem;
+    }
+    .step-card h3 { font-size: .98rem; margin: 0 0 .3rem; }
+    .step-card p { color: #475569; font-size: .88rem; margin: 0; }
+    .analogy {
+      background: #fce7f3;
+      border: 1px solid #f9a8d4;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      font-size: 1rem;
+    }
+    .analogy b { color: #be185d; }
+    .takeaway {
+      background: #ecfeff;
+      border: 1px solid #67e8f9;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      font-size: 1rem;
+    }
+    .note {
+      font-size: .85rem;
+      color: #64748b;
+      background: #f8fafc;
+      border-left: 3px solid #cbd5e1;
+      padding: .55rem .75rem;
+      border-radius: 0 .4rem .4rem 0;
+      margin: .75rem 0;
+    }
+    .warn {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: .6rem;
+      padding: .8rem 1rem;
+      font-size: .92rem;
+      color: #78350f;
+      margin: .75rem 0;
+    }
+    code.addr {
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: .3rem;
+      padding: .05rem .35rem;
+      font-size: .9em;
+      color: #0f172a;
+    }
+    .mapping { display: grid; gap: .4rem; margin-top: .8rem; }
+    .mapping div {
+      display: flex;
+      gap: .5rem;
+      align-items: baseline;
+      font-size: .93rem;
+      color: #334155;
+    }
+    .mapping span:first-child {
+      min-width: 5.2rem;
+      color: #be185d;
+      font-weight: 600;
+    }
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .9rem;
+      margin: .4rem 0;
+    }
+    th, td {
+      text-align: left;
+      padding: .55rem .6rem;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+    th { background: #f8fafc; color: #475569; font-weight: 600; white-space: nowrap; }
+    td { color: #334155; }
+    tr:last-child td { border-bottom: none; }
+    details {
+      border: 1px solid #e2e8f0;
+      border-radius: .65rem;
+      padding: .75rem 1rem;
+      margin-bottom: .6rem;
+      background: #fff;
+    }
+    details[open] { background: #f8fafc; }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: .95rem;
+      color: #0f172a;
+      list-style: none;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary::before { content: "＋ "; color: #0284c7; }
+    details[open] summary::before { content: "－ "; }
+    details p { margin: .6rem 0 0; font-size: .92rem; color: #334155; }
+    footer {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.8rem;
+      margin-top: 1.5rem;
+      padding-bottom: 1rem;
+    }
+    @media (max-width: 600px) {
+      body { padding: 1rem .5rem; }
+      .section { padding: 1rem; }
+      h1 { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>IP、MAC 和虚拟地址，一次讲明白</h1>
+      <p class="subtitle">用寄快递的方式，看懂电脑、服务器、虚拟机身上的各种地址。</p>
+      <p class="subtitle" style="font-size: 0.9rem; margin-top: 0.4rem;">详细文字版：<a href="./ip-mac-address-basics.md" style="color: #0284c7;">ip-mac-address-basics.md</a></p>
+    </header>
+
+    <!-- 1. 三层地址 -->
+    <div class="section">
+      <h2>先记住：一次通信要用三层地址</h2>
+      <div class="figure">
+        <svg viewBox="0 0 800 340" role="img" aria-label="IP 地址、端口、MAC 地址各管什么">
+          <defs>
+            <marker id="m1" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8"/>
+            </marker>
+          </defs>
+
+          <rect x="30" y="30" width="220" height="80" rx="12" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+          <text x="140" y="66" fill="#0f172a" font-size="18" font-weight="600" text-anchor="middle">IP 地址</text>
+          <text x="140" y="90" fill="#475569" font-size="13" text-anchor="middle">在哪 · 门牌号</text>
+
+          <rect x="30" y="130" width="220" height="80" rx="12" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+          <text x="140" y="166" fill="#0f172a" font-size="18" font-weight="600" text-anchor="middle">端口</text>
+          <text x="140" y="190" fill="#475569" font-size="13" text-anchor="middle">哪个程序 · 房间号</text>
+
+          <rect x="30" y="230" width="220" height="80" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+          <text x="140" y="266" fill="#0f172a" font-size="18" font-weight="600" text-anchor="middle">MAC 地址</text>
+          <text x="140" y="290" fill="#475569" font-size="13" text-anchor="middle">谁 · 网卡身份证</text>
+
+          <line x1="255" y1="70" x2="323" y2="70" stroke="#94a3b8" stroke-width="2" marker-end="url(#m1)"/>
+          <line x1="255" y1="170" x2="323" y2="170" stroke="#94a3b8" stroke-width="2" marker-end="url(#m1)"/>
+          <line x1="255" y1="270" x2="323" y2="270" stroke="#94a3b8" stroke-width="2" marker-end="url(#m1)"/>
+
+          <rect x="330" y="30" width="200" height="80" rx="12" fill="#fce7f3" stroke="#db2777" stroke-width="1.5"/>
+          <text x="430" y="64" fill="#0f172a" font-size="17" font-weight="600" text-anchor="middle">家庭住址</text>
+          <text x="430" y="88" fill="#9d174d" font-size="12.5" text-anchor="middle">搬家就会换</text>
+
+          <rect x="330" y="130" width="200" height="80" rx="12" fill="#fce7f3" stroke="#db2777" stroke-width="1.5"/>
+          <text x="430" y="164" fill="#0f172a" font-size="17" font-weight="600" text-anchor="middle">房间号</text>
+          <text x="430" y="188" fill="#9d174d" font-size="12.5" text-anchor="middle">一台电脑有很多个</text>
+
+          <rect x="330" y="230" width="200" height="80" rx="12" fill="#fce7f3" stroke="#db2777" stroke-width="1.5"/>
+          <text x="430" y="264" fill="#0f172a" font-size="17" font-weight="600" text-anchor="middle">身份证号</text>
+          <text x="430" y="288" fill="#9d174d" font-size="12.5" text-anchor="middle">出厂就定，跟着网卡</text>
+
+          <text x="548" y="75" fill="#475569" font-size="14">会变：换网络就换</text>
+          <text x="548" y="175" fill="#475569" font-size="14">程序的门牌号</text>
+          <text x="548" y="275" fill="#475569" font-size="14">网卡出厂就带</text>
+
+          <text x="400" y="333" fill="#64748b" font-size="12.5" text-anchor="middle">先用 IP 找到机器，再用端口找到程序；MAC 只在局域网内部用来认网卡</text>
+        </svg>
+      </div>
+      <p>网络通信像寄快递：先按地址找到楼，再按房间号找到人。计算机网络里，“楼”是 IP，“房间号”是端口，“收件人的身份证”是 MAC。</p>
+    </div>
+
+    <!-- 2. MAC -->
+    <div class="section">
+      <h2>MAC 地址：网卡的身份证</h2>
+      <div class="figure">
+        <svg viewBox="0 0 800 270" role="img" aria-label="MAC 地址由厂商代码和设备编号组成">
+          <text x="400" y="72" fill="#0f172a" font-size="34" font-family="ui-monospace, Consolas, monospace" text-anchor="middle" letter-spacing="2">00:1A:2B:3C:4D:5E</text>
+
+          <rect x="180" y="100" width="215" height="62" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+          <text x="287" y="124" fill="#166534" font-size="12.5" text-anchor="middle">前 3 组（24 位）</text>
+          <text x="287" y="148" fill="#0f172a" font-size="15" font-weight="600" text-anchor="middle">厂商代码</text>
+
+          <rect x="405" y="100" width="215" height="62" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+          <text x="512" y="124" fill="#166534" font-size="12.5" text-anchor="middle">后 3 组（24 位）</text>
+          <text x="512" y="148" fill="#0f172a" font-size="15" font-weight="600" text-anchor="middle">设备编号</text>
+
+          <rect x="110" y="195" width="270" height="54" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.2"/>
+          <text x="245" y="227" fill="#334155" font-size="14" text-anchor="middle">烧在网卡里，出厂就定</text>
+
+          <rect x="420" y="195" width="270" height="54" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.2"/>
+          <text x="555" y="227" fill="#334155" font-size="14" text-anchor="middle">只在局域网内认设备</text>
+        </svg>
+      </div>
+      <ul class="clean">
+        <li>全名 <b>物理地址 / 硬件地址</b>，一台设备有几块网卡就有几个 MAC。</li>
+        <li>写法是 6 组十六进制数，例如 <code class="addr">00:1A:2B:3C:4D:5E</code>。</li>
+        <li>数据在同一个局域网里转发时，靠 MAC 找网卡；交换机就是按 MAC 转发的。</li>
+        <li>系统要发数据前，会先用 <b>ARP</b> 问一句：“这个 IP 是哪块网卡的？”从而拿到 MAC。</li>
+        <li>默认出厂固定，但软件可以伪装（改 MAC），所以它不能当密码用。</li>
+      </ul>
+      <div class="note">MAC 只在“同一条局域网”里有意义。数据每经过一个路由器，外层会被换成下一段的 MAC，但 IP 一般保持不变。</div>
+    </div>
+
+    <!-- 3. IP -->
+    <div class="section">
+      <h2>IP 地址：网络里的门牌号</h2>
+      <div class="figure">
+        <svg viewBox="0 0 800 320" role="img" aria-label="IPv4 地址由网络部分和主机部分组成">
+          <text x="400" y="64" fill="#0f172a" font-size="36" font-family="ui-monospace, Consolas, monospace" text-anchor="middle" letter-spacing="1">192.168.1.10</text>
+
+          <rect x="73" y="92" width="150" height="64" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+          <text x="148" y="132" fill="#0f172a" font-size="26" font-family="ui-monospace, Consolas, monospace" font-weight="600" text-anchor="middle">192</text>
+
+          <rect x="241" y="92" width="150" height="64" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+          <text x="316" y="132" fill="#0f172a" font-size="26" font-family="ui-monospace, Consolas, monospace" font-weight="600" text-anchor="middle">168</text>
+
+          <rect x="409" y="92" width="150" height="64" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+          <text x="484" y="132" fill="#0f172a" font-size="26" font-family="ui-monospace, Consolas, monospace" font-weight="600" text-anchor="middle">1</text>
+
+          <rect x="577" y="92" width="150" height="64" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+          <text x="652" y="132" fill="#0f172a" font-size="26" font-family="ui-monospace, Consolas, monospace" font-weight="600" text-anchor="middle">10</text>
+
+          <rect x="73" y="174" width="486" height="34" rx="8" fill="#fef3c7" fill-opacity=".55" stroke="#d97706" stroke-width="1" stroke-dasharray="5,4"/>
+          <text x="316" y="197" fill="#92400e" font-size="13.5" text-anchor="middle">网络部分 = 小区 / 网段</text>
+
+          <rect x="577" y="174" width="150" height="34" rx="8" fill="#e0f2fe" fill-opacity=".7" stroke="#0284c7" stroke-width="1" stroke-dasharray="5,4"/>
+          <text x="652" y="197" fill="#075985" font-size="13" text-anchor="middle">主机部分 = 门牌</text>
+
+          <text x="400" y="246" fill="#334155" font-size="14.5" text-anchor="middle">子网掩码 255.255.255.0 表示：前 3 段相同 = 同一个局域网</text>
+          <text x="400" y="274" fill="#475569" font-size="14" text-anchor="middle">同一网段：直接通信；不同网段：数据先交给网关（路由器）</text>
+          <text x="400" y="302" fill="#64748b" font-size="13" text-anchor="middle">例如 192.168.2.20 和它不在同一网段，必须经过路由器</text>
+        </svg>
+      </div>
+      <ul class="clean">
+        <li>IPv4 是 32 位，写成 4 段十进制数，每段 0–255，例如 <code class="addr">192.168.1.10</code>。</li>
+        <li><b>IP 是逻辑地址</b>：换一个网络（换 Wi-Fi、换机房），IP 就可能变。</li>
+        <li>常看到的 <code class="addr">192.168.1.10/24</code>，<code>/24</code> 就是子网掩码的简写，表示前 24 位是网络部分。</li>
+        <li>IPv6 是 128 位，用十六进制和冒号表示，地址多到几乎用不完，以后会慢慢替代 IPv4。</li>
+      </ul>
+    </div>
+
+    <!-- 4. 网关 -->
+    <div class="section">
+      <h2>同小区直接喊，跨小区找门卫</h2>
+      <div class="figure">
+        <svg viewBox="0 0 800 310" role="img" aria-label="同网段直接通信，跨网段交给网关">
+          <defs>
+            <marker id="m2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#0284c7"/>
+            </marker>
+          </defs>
+
+          <rect x="40" y="45" width="170" height="80" rx="12" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+          <text x="125" y="78" fill="#0f172a" font-size="16" font-weight="600" text-anchor="middle">电脑 A</text>
+          <text x="125" y="103" fill="#475569" font-size="13" text-anchor="middle">192.168.1.10</text>
+
+          <text x="252" y="68" fill="#0284c7" font-size="13" text-anchor="middle">同网段</text>
+          <line x1="212" y1="85" x2="290" y2="85" stroke="#0284c7" stroke-width="2" marker-end="url(#m2)"/>
+
+          <rect x="295" y="45" width="170" height="80" rx="12" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+          <text x="380" y="78" fill="#0f172a" font-size="16" font-weight="600" text-anchor="middle">电脑 B</text>
+          <text x="380" y="103" fill="#475569" font-size="13" text-anchor="middle">192.168.1.20</text>
+
+          <text x="400" y="163" fill="#475569" font-size="13.5" text-anchor="middle">① 前 3 段一样 → 同一个局域网，直接通信（先 ARP 查 MAC）</text>
+
+          <rect x="40" y="195" width="170" height="80" rx="12" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+          <text x="125" y="228" fill="#0f172a" font-size="16" font-weight="600" text-anchor="middle">电脑 A</text>
+          <text x="125" y="253" fill="#475569" font-size="13" text-anchor="middle">192.168.1.10</text>
+
+          <text x="252" y="218" fill="#d97706" font-size="13" text-anchor="middle">跨网段</text>
+          <line x1="212" y1="235" x2="290" y2="235" stroke="#0284c7" stroke-width="2" marker-end="url(#m2)"/>
+
+          <rect x="295" y="195" width="170" height="80" rx="12" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+          <text x="380" y="228" fill="#0f172a" font-size="15" font-weight="600" text-anchor="middle">路由器 / 网关</text>
+          <text x="380" y="253" fill="#475569" font-size="13" text-anchor="middle">192.168.1.1</text>
+
+          <text x="506" y="218" fill="#64748b" font-size="13" text-anchor="middle">转发</text>
+          <line x1="467" y1="235" x2="543" y2="235" stroke="#0284c7" stroke-width="2" marker-end="url(#m2)"/>
+
+          <rect x="548" y="195" width="212" height="80" rx="12" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+          <text x="654" y="241" fill="#0f172a" font-size="14" text-anchor="middle">互联网 / 其他网段</text>
+
+          <text x="400" y="298" fill="#475569" font-size="13.5" text-anchor="middle">② 地址对不上 → 交给网关，由它继续转发出去</text>
+        </svg>
+      </div>
+      <p>每台电脑都配了一个<b>默认网关</b>，通常就是家里/公司的路由器。发数据前先比一下网段：对得上，直接喊；对不上，全部交给网关。</p>
+    </div>
+
+    <!-- 5. 内网/公网 -->
+    <div class="section">
+      <h2>内网 IP 和公网 IP，为什么要分开</h2>
+      <div class="figure">
+        <svg viewBox="0 0 800 380" role="img" aria-label="家里的设备通过路由器 NAT 共享一个公网 IP">
+          <defs>
+            <marker id="m3" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#0284c7"/>
+            </marker>
+          </defs>
+
+          <rect x="18" y="48" width="390" height="316" rx="18" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="32" y="40" fill="#64748b" font-size="13">局域网（内网）</text>
+
+          <rect x="42" y="82" width="148" height="80" rx="12" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+          <text x="116" y="115" fill="#0f172a" font-size="15" font-weight="600" text-anchor="middle">电脑</text>
+          <text x="116" y="140" fill="#475569" font-size="12.5" text-anchor="middle">192.168.1.10</text>
+
+          <rect x="42" y="244" width="148" height="80" rx="12" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+          <text x="116" y="277" fill="#0f172a" font-size="15" font-weight="600" text-anchor="middle">手机</text>
+          <text x="116" y="302" fill="#475569" font-size="12.5" text-anchor="middle">192.168.1.11</text>
+
+          <line x1="192" y1="122" x2="251" y2="174" stroke="#0284c7" stroke-width="2" marker-end="url(#m3)"/>
+          <line x1="192" y1="284" x2="251" y2="242" stroke="#0284c7" stroke-width="2" marker-end="url(#m3)"/>
+
+          <rect x="255" y="142" width="132" height="134" rx="12" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+          <text x="321" y="178" fill="#0f172a" font-size="15" font-weight="600" text-anchor="middle">路由器</text>
+          <text x="321" y="202" fill="#475569" font-size="11.5" text-anchor="middle">网关 192.168.1.1</text>
+          <text x="321" y="230" fill="#92400e" font-size="11.5" text-anchor="middle">公网 IP</text>
+          <text x="321" y="252" fill="#92400e" font-size="12" font-family="ui-monospace, Consolas, monospace" text-anchor="middle">203.0.113.7</text>
+
+          <text x="417" y="199" fill="#d97706" font-size="11.5" text-anchor="middle">NAT</text>
+          <line x1="389" y1="209" x2="444" y2="209" stroke="#0284c7" stroke-width="2" marker-end="url(#m3)"/>
+
+          <rect x="448" y="142" width="136" height="134" rx="12" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+          <text x="516" y="214" fill="#0f172a" font-size="17" font-weight="600" text-anchor="middle">互联网</text>
+
+          <line x1="586" y1="209" x2="629" y2="209" stroke="#0284c7" stroke-width="2" marker-end="url(#m3)"/>
+
+          <rect x="632" y="132" width="150" height="150" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+          <text x="707" y="168" fill="#0f172a" font-size="14" font-weight="600" text-anchor="middle">网站服务器</text>
+          <text x="707" y="196" fill="#166534" font-size="12" text-anchor="middle">公网 IP</text>
+          <text x="707" y="217" fill="#166534" font-size="13" font-family="ui-monospace, Consolas, monospace" text-anchor="middle">47.96.1.20</text>
+          <text x="707" y="246" fill="#475569" font-size="12" text-anchor="middle">端口 443</text>
+        </svg>
+      </div>
+      <ul class="clean">
+        <li><b>内网 IP</b>（私有地址）只能在家里/公司内部用，常见 <code class="addr">192.168.x.x</code>、<code class="addr">10.x.x.x</code>、<code class="addr">172.16–31.x.x</code>。</li>
+        <li><b>公网 IP</b> 是全球唯一的，运营商分配。公网 IP 很紧张，所以一个家庭通常只分一个。</li>
+        <li><b>NAT</b> 是路由器干的事：出门时把“内网 IP + 端口”改写成“公网 IP + 另一个端口”，回来时再改回去。</li>
+        <li>正因为 NAT，外网默认<b>无法主动连进来</b>。想让自己电脑被访问，需要端口映射（内网穿透）或云服务器。</li>
+      </ul>
+      <div class="note">你查到的“我的 IP”经常是 192.168 开头，那只代表你在局域网里的位置；别人看到的是你家路由器的公网 IP。</div>
+    </div>
+
+    <!-- 6. 服务器 -->
+    <div class="section">
+      <h2>服务器上的 IP 是怎么回事</h2>
+      <div class="figure">
+        <svg viewBox="0 0 800 250" role="img" aria-label="域名经 DNS 解析成公网 IP">
+          <defs>
+            <marker id="m4" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8"/>
+            </marker>
+          </defs>
+
+          <text x="259" y="54" fill="#64748b" font-size="12" text-anchor="middle">① 这个域名在哪？</text>
+          <text x="519" y="54" fill="#64748b" font-size="12" text-anchor="middle">② 回一个 IP</text>
+
+          <rect x="40" y="70" width="180" height="100" rx="12" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+          <text x="130" y="110" fill="#0f172a" font-size="15" font-weight="600" text-anchor="middle">你（浏览器）</text>
+          <text x="130" y="137" fill="#475569" font-size="12.5" text-anchor="middle">www.example.com</text>
+
+          <line x1="222" y1="120" x2="294" y2="120" stroke="#94a3b8" stroke-width="2" marker-end="url(#m4)"/>
+
+          <rect x="300" y="70" width="180" height="100" rx="12" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+          <text x="390" y="110" fill="#0f172a" font-size="15" font-weight="600" text-anchor="middle">DNS 服务器</text>
+          <text x="390" y="137" fill="#475569" font-size="12.5" text-anchor="middle">名字 → IP</text>
+
+          <line x1="482" y1="120" x2="554" y2="120" stroke="#94a3b8" stroke-width="2" marker-end="url(#m4)"/>
+
+          <rect x="560" y="70" width="200" height="100" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+          <text x="660" y="110" fill="#0f172a" font-size="15" font-weight="600" text-anchor="middle">网站服务器</text>
+          <text x="660" y="138" fill="#166534" font-size="15" font-family="ui-monospace, Consolas, monospace" text-anchor="middle">47.96.1.20</text>
+
+          <text x="400" y="215" fill="#475569" font-size="13.5" text-anchor="middle">域名只是给人记住的名字；真正通信靠的是 IP 地址</text>
+        </svg>
+      </div>
+      <p>你输入网址后，浏览器先问 DNS：“这个名字对应哪个 IP？”拿到 IP 才真正发请求。服务器本身可以同时拥有好几个地址：</p>
+
+      <div class="figure">
+        <svg viewBox="0 0 800 330" role="img" aria-label="服务器上的公网 IP、内网 IP、回环地址和 0.0.0.0">
+          <rect x="150" y="30" width="400" height="280" rx="16" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+          <text x="350" y="62" fill="#166534" font-size="14.5" font-weight="600" text-anchor="middle">一台服务器（机房里的机器）</text>
+
+          <rect x="175" y="80" width="350" height="44" rx="9" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.3"/>
+          <text x="350" y="108" fill="#0f172a" font-size="14" font-family="ui-monospace, Consolas, monospace" text-anchor="middle">公网 IP  47.96.1.20</text>
+
+          <rect x="175" y="134" width="350" height="44" rx="9" fill="#f1f5f9" stroke="#64748b" stroke-width="1.3"/>
+          <text x="350" y="162" fill="#0f172a" font-size="14" font-family="ui-monospace, Consolas, monospace" text-anchor="middle">内网 IP  10.0.0.5</text>
+
+          <rect x="175" y="188" width="350" height="44" rx="9" fill="#fce7f3" stroke="#db2777" stroke-width="1.3"/>
+          <text x="350" y="216" fill="#0f172a" font-size="14" font-family="ui-monospace, Consolas, monospace" text-anchor="middle">127.0.0.1（自己）</text>
+
+          <rect x="175" y="242" width="350" height="44" rx="9" fill="#fef3c7" stroke="#d97706" stroke-width="1.3"/>
+          <text x="350" y="270" fill="#0f172a" font-size="14" font-family="ui-monospace, Consolas, monospace" text-anchor="middle">0.0.0.0（监听所有网卡）</text>
+
+          <text x="575" y="106" fill="#475569" font-size="12">外面的人靠它进来</text>
+          <text x="575" y="160" fill="#475569" font-size="12">同一机房内部互访</text>
+          <text x="575" y="214" fill="#475569" font-size="12">服务自己调自己</text>
+          <text x="575" y="268" fill="#475569" font-size="12">配置文件里常见</text>
+        </svg>
+      </div>
+
+      <ul class="clean">
+        <li><b>公网 IP</b>：给全世界访问的入口。云厂商常叫“弹性公网 IP / EIP”，背后其实是 NAT 映射到内网 IP。</li>
+        <li><b>内网 IP</b>：同一台机器在机房/VPC 里的地址，数据库、内部服务之间用它通信，更安全也更快。</li>
+        <li><b>127.0.0.1</b>：回环地址，永远指向自己，不经过网卡。程序里写 <code class="addr">localhost</code> 就是连它。</li>
+        <li><b>0.0.0.0</b>：不是一个能被访问的地址，而是“监听所有网卡”的写法。服务监听 <code class="addr">0.0.0.0:80</code>，外网和内网才能连进来；只写 <code class="addr">127.0.0.1</code> 则只有本机能连。</li>
+        <li>端口决定找哪个程序：网站 80/443、SSH 22、MySQL 3306。</li>
+      </ul>
+      <div class="warn">云服务器连不上？顺序检查：服务是否监听 0.0.0.0 → 本机防火墙 → 云厂商安全组 → 公网 IP 是否绑对。</div>
+    </div>
+
+    <!-- 7. 虚拟地址 -->
+    <div class="section">
+      <h2>“虚拟地址”到底指什么？</h2>
+      <p>这个词在不同场景意思不一样，听到时先看上下文。网络上常说的是下面三种，最后一种其实是内存，容易混淆。</p>
+      <div class="figure">
+        <svg viewBox="0 0 800 320" role="img" aria-label="四种常见的虚拟地址含义">
+          <rect x="30" y="25" width="350" height="125" rx="12" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+          <text x="52" y="59" fill="#0f172a" font-size="16" font-weight="600">127.0.0.1 · 回环地址</text>
+          <text x="52" y="91" fill="#334155" font-size="13.5">本机自己跟自己说话</text>
+          <text x="52" y="119" fill="#64748b" font-size="12.5">localhost 就是它</text>
+
+          <rect x="420" y="25" width="350" height="125" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+          <text x="442" y="59" fill="#0f172a" font-size="16" font-weight="600">虚拟机 / 容器的 IP</text>
+          <text x="442" y="91" fill="#334155" font-size="13.5">软件在电脑里造出来的网卡</text>
+          <text x="442" y="119" fill="#64748b" font-size="12.5">VMware NAT、docker0、K8s Pod</text>
+
+          <rect x="30" y="172" width="350" height="125" rx="12" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+          <text x="52" y="206" fill="#0f172a" font-size="16" font-weight="600">虚拟 IP（VIP）</text>
+          <text x="52" y="238" fill="#334155" font-size="13.5">在几台机器之间漂移的地址</text>
+          <text x="52" y="266" fill="#64748b" font-size="12.5">负载均衡、keepalived</text>
+
+          <rect x="420" y="172" width="350" height="125" rx="12" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+          <text x="442" y="206" fill="#0f172a" font-size="16" font-weight="600">⚠ 虚拟内存 / 进程地址空间</text>
+          <text x="442" y="238" fill="#334155" font-size="13.5">操作系统给程序编的内存地址</text>
+          <text x="442" y="266" fill="#64748b" font-size="12.5">那是内存地址，不是网络地址</text>
+        </svg>
+      </div>
+
+      <h3>1. 回环地址：自己发给自己</h3>
+      <p>127.0.0.1 是操作系统内部的虚拟接口。数据根本不离开本机，写得快、不依赖网络，开发时常用它测试本地服务。</p>
+
+      <h3>2. 虚拟机 / 容器的地址：软件造出来的网卡</h3>
+      <p>虚拟机、Docker、K8s 都会创建“虚拟网卡”和“虚拟交换机”，再给里面的系统分配 IP。这些 IP 只在那套虚拟网络里有意义。</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>虚拟机网络模式</th><th>IP 从哪来</th><th>谁能访问</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>桥接</td><td>和宿主机同一个局域网，由路由器分配</td><td>局域网内其他设备都能访问</td></tr>
+            <tr><td>NAT</td><td>虚拟机软件自己分配（常见 192.168.x.x）</td><td>虚拟机能出去，外面进不来（要端口映射）</td></tr>
+            <tr><td>仅主机</td><td>虚拟机软件自己分配</td><td>只有宿主机和虚拟机互通</td></tr>
+            <tr><td>Docker 默认</td><td>docker0 网桥分配（常见 172.17.x.x）</td><td>容器间互通，外部访问要 -p 映射</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>3. 虚拟 IP（VIP）：会漂移的地址</h3>
+      <p>负载均衡器对外只暴露一个 IP，后面挂很多台服务器。某台挂了，地址自动飘到另一台上，用户感觉不到。K8s 的 Service ClusterIP 也是这种“虚”的地址。</p>
+
+      <h3>4. 别混淆：内存里的“虚拟地址”</h3>
+      <p>进程看到的 0x7ffd... 这类地址，是操作系统通过页表映射到物理内存的虚拟地址，和 IP、MAC 完全不是一回事。</p>
+    </div>
+
+    <!-- 8. 旅程 -->
+    <div class="section">
+      <h2>一次访问的完整旅程</h2>
+      <div class="steps">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <h3>问 DNS</h3>
+          <p>example.com 的 IP 是多少？拿到 47.96.1.20。</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <h3>比网段</h3>
+          <p>目标不在本局域网，数据交给默认网关。</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <h3>NAT 出门</h3>
+          <p>路由器把内网 IP 改成公网 IP，端口也一起改写。</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">4</div>
+          <h3>到达服务器</h3>
+          <p>按公网 IP 找到机器，按端口 443 找到网站程序。</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">5</div>
+          <h3>原路返回</h3>
+          <p>回包再经过 NAT，改回你电脑的内网 IP。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. 类比 -->
+    <div class="section">
+      <h2>打个比方：寄快递</h2>
+      <p class="analogy">寄快递时，快递员先按<b>地址</b>找到小区，门卫告诉你往哪走，最后按<b>房间号</b>把包裹交给对的人。</p>
+      <div class="mapping">
+        <div><span>域名</span><span>收件人的名字（好记）</span></div>
+        <div><span>DNS</span><span>查号台：名字 → 地址</span></div>
+        <div><span>IP</span><span>收货地址（会变）</span></div>
+        <div><span>MAC</span><span>身份证号（认这块网卡）</span></div>
+        <div><span>网关</span><span>小区门卫 / 大门</span></div>
+        <div><span>端口</span><span>房间号（找哪个程序）</span></div>
+        <div><span>NAT</span><span>前台代收：外面只看到小区大门</span></div>
+      </div>
+    </div>
+
+    <!-- 10. 常见问题 -->
+    <div class="section">
+      <h2>常见疑问</h2>
+
+      <details>
+        <summary>为什么我的电脑 IP 是 192.168 开头？</summary>
+        <p>那是私有地址，只在你所在的局域网里有效。互联网上别人看到的是路由器或运营商的公网 IP，不是你电脑的内网 IP。</p>
+      </details>
+
+      <details>
+        <summary>为什么路由器重启后，电脑的 IP 变了？</summary>
+        <p>因为路由器用 DHCP 自动分配地址，而且有“租期”。想固定的话，可以在路由器里做“MAC 绑定 IP”（DHCP 静态分配）。</p>
+      </details>
+
+      <details>
+        <summary>服务器为什么既有公网 IP 又有内网 IP？</summary>
+        <p>云厂商用 NAT 把公网 IP 映射到内网 IP。公网 IP 负责让外面访问进来，内网 IP 负责同一机房/VPC 内的高效、安全通信。</p>
+      </details>
+
+      <details>
+        <summary>0.0.0.0 和 127.0.0.1 有什么区别？</summary>
+        <p>127.0.0.1 只代表本机，服务写它就只有本机能连。0.0.0.0 是“监听所有网卡”的写法，服务写它，内网和外网（在防火墙允许的前提下）都能连。另外，0.0.0.0 出现在路由表里表示“默认路由”，那是另一个含义。</p>
+      </details>
+
+      <details>
+        <summary>宿主机 ping 不通虚拟机，是什么原因？</summary>
+        <p>先看虚拟机的网络模式：仅主机只能宿主机访问，NAT 一般宿主机能访问但外部不行，桥接才和局域网平级。再检查虚拟机内部防火墙和 IP 是否配在同一网段。</p>
+      </details>
+
+      <details>
+        <summary>MAC 地址能改吗？</summary>
+        <p>可以，操作系统和网卡驱动允许软件伪装 MAC。但它只是局域网转发用的标识，改了也不会让你变成另一台受信任的设备。</p>
+      </details>
+    </div>
+
+    <!-- 11. 速查表 -->
+    <div class="section">
+      <h2>速查表</h2>
+      <h3>常见私有网段</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>网段</th><th>说明</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code class="addr">10.0.0.0/8</code></td><td>私有地址，大企业/云上内网常见</td></tr>
+            <tr><td><code class="addr">172.16.0.0/12</code></td><td>私有地址，范围 172.16–172.31</td></tr>
+            <tr><td><code class="addr">192.168.0.0/16</code></td><td>私有地址，家里最常见</td></tr>
+            <tr><td><code class="addr">127.0.0.0/8</code></td><td>回环地址，指向本机</td></tr>
+            <tr><td><code class="addr">169.254.0.0/16</code></td><td>没拿到 DHCP 时的临时地址，通常说明网络有问题</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>常用命令</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>想看什么</th><th>Windows</th><th>Linux / macOS</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>本机 IP、MAC、网关</td><td><code class="addr">ipconfig /all</code></td><td><code class="addr">ip addr</code> / <code class="addr">ifconfig</code></td></tr>
+            <tr><td>局域网 IP 与 MAC 对照</td><td><code class="addr">arp -a</code></td><td><code class="addr">arp -a</code> / <code class="addr">ip neigh</code></td></tr>
+            <tr><td>通不通</td><td><code class="addr">ping 目标IP</code></td><td><code class="addr">ping 目标IP</code></td></tr>
+            <tr><td>域名对应哪个 IP</td><td><code class="addr">nslookup 域名</code></td><td><code class="addr">dig 域名</code></td></tr>
+            <tr><td>经过哪些路由器</td><td><code class="addr">tracert 域名</code></td><td><code class="addr">traceroute 域名</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 12. 小结 -->
+    <div class="section">
+      <h2>记住一句话</h2>
+      <p class="takeaway"><b>IP 负责找到机器，端口负责找到程序，MAC 负责在局域网里认网卡；内网地址出门要靠 NAT 换成公网地址，名字则要靠 DNS 翻译成 IP。</b></p>
+    </div>
+
+    <footer>IP、MAC 和虚拟地址 · 极简讲解</footer>
+  </div>
+</body>
+</html>
